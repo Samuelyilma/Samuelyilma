@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- TODO: Add backup rules here for cloud backup.
+        By default, all files are backed up.
+        Use <include> and <exclude> tags to customize.
+        For more information, see https://developer.android.com/guide/topics/data/autobackup
+        -->
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <!-- TODO: Add backup rules here for device-to-device transfer.
+        By default, all files are transferred.
+        Use <include> and <exclude> tags to customize.
+        For more information, see https://developer.android.com/guide/topics/data/autobackup
+        -->
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
