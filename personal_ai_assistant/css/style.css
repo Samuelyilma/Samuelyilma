@@ -1,0 +1,460 @@
+:root {
+    --primary-color: #0a0a23; /* Dark blue-black */
+    --secondary-color: #00ffff; /* Cyan */
+    --accent-color: #ff00ff;   /* Magenta */
+    --text-color: #e0e0e0;     /* Light grey */
+    --bg-color: #050515;       /* Very dark blue */
+    --border-color: #00ffff80; /* Cyan with transparency */
+    --input-bg-color: #101030; /* Background for inputs and AI messages */
+    --button-hover-bg: #00ffff30; /* Hover for primary buttons (cyan based) */
+    --led-glow-strong: 0 0 5px var(--secondary-color), 0 0 10px var(--secondary-color), 0 0 15px var(--secondary-color), 0 0 20px var(--accent-color);
+    --led-glow-soft: 0 0 3px var(--secondary-color), 0 0 6px var(--secondary-color), 0 0 9px var(--accent-color);
+    --font-family: 'Orbitron', sans-serif;
+    --element-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* General shadow for elements */
+    --text-shadow-strong: 1px 1px 2px rgba(0,0,0,0.7);
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden; /* Prevents scrollbars from body itself */
+}
+
+.container {
+    width: 90%;
+    max-width: 800px;
+    height: 95vh;
+    max-height: 900px;
+    background-color: var(--primary-color);
+    border: 2px solid var(--border-color);
+    border-radius: 15px;
+    box-shadow: var(--led-glow-strong), 0 0 30px #000000cc inset, var(--element-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Important for managing internal scrolling */
+}
+
+header {
+    padding: 15px 20px;
+    background-color: rgba(10, 10, 35, 0.8); /* Slightly transparent */
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 255, 255, 0.3), var(--element-shadow);
+}
+
+.logo {
+    font-size: 1.5em;
+    color: var(--secondary-color);
+    text-shadow: var(--led-glow-soft), var(--text-shadow-strong);
+}
+
+.logo .fa-robot {
+    margin-right: 10px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { text-shadow: var(--led-glow-soft); }
+    50% { text-shadow: 0 0 5px var(--secondary-color), 0 0 10px var(--secondary-color); }
+    100% { text-shadow: var(--led-glow-soft); }
+}
+
+.icon-button {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--secondary-color);
+    font-size: 1.2em;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+    margin-left: 10px;
+    box-shadow: var(--element-shadow);
+}
+
+.icon-button:hover {
+    background-color: var(--button-hover-bg);
+    box-shadow: var(--led-glow-soft), var(--element-shadow);
+    transform: translateY(-2px);
+}
+
+.chat-container {
+    flex-grow: 1;
+    padding: 15px;
+    overflow-y: auto; /* This is where scrolling happens */
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-output {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 10px;
+    max-width: 80%;
+    word-wrap: break-word;
+    line-height: 1.6;
+}
+
+.user-message {
+    background-color: var(--accent-color);
+    color: var(--primary-color);
+    align-self: flex-end;
+    border-top-right-radius: 0;
+    box-shadow: 0 2px 5px rgba(255, 0, 255, 0.4), var(--element-shadow);
+}
+
+.ai-message {
+    background-color: var(--input-bg-color);
+    color: var(--text-color);
+    align-self: flex-start;
+    border: 1px solid var(--border-color);
+    border-top-left-radius: 0;
+    box-shadow: 0 2px 5px rgba(0, 255, 255, 0.3), var(--element-shadow);
+}
+
+/* Styles for Markdown content within AI messages */
+.ai-message div { /* Target the div created by js for markdown content */
+    word-wrap: break-word; /* Ensure long words/strings wrap */
+}
+
+.ai-message div p {
+    margin-top: 0;
+    margin-bottom: 0.5em; /* Space between paragraphs */
+}
+.ai-message div p:last-child {
+    margin-bottom: 0;
+}
+
+.ai-message div h1, .ai-message div h2, .ai-message div h3, .ai-message div h4, .ai-message div h5, .ai-message div h6 {
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
+    color: var(--secondary-color);
+    text-shadow: var(--led-glow-soft);
+}
+
+.ai-message div ul, .ai-message div ol {
+    margin-left: 20px;
+    padding-left: 10px;
+}
+
+.ai-message div li {
+    margin-bottom: 0.3em;
+}
+
+.ai-message div pre {
+    background-color: #00000080; /* Dark, slightly transparent background */
+    color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    overflow-x: auto; /* Allow horizontal scrolling for code */
+    font-family: 'Consolas', 'Monaco', monospace; /* Monospaced font for code */
+    font-size: 0.9em;
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+}
+
+.ai-message div code { /* Inline code */
+    background-color: #00000080;
+    color: var(--accent-color);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9em;
+}
+
+.ai-message div pre code { /* Code within pre block */
+    background-color: transparent; /* No extra background for code in pre */
+    color: inherit; /* Inherit color from pre */
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+.ai-message div blockquote {
+    border-left: 3px solid var(--accent-color);
+    padding-left: 10px;
+    margin-left: 5px;
+    color: #c0c0c0;
+    font-style: italic;
+}
+
+.ai-message div table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1em;
+    border: 1px solid var(--border-color);
+}
+
+.ai-message div th, .ai-message div td {
+    border: 1px solid var(--border-color);
+    padding: 6px 10px;
+    text-align: left;
+}
+
+.ai-message div th {
+    background-color: var(--input-bg-color);
+    color: var(--secondary-color);
+}
+
+.user-message p { /* User messages remain simple text */
+    margin: 0;
+}
+
+
+footer {
+    padding: 15px 20px;
+    background-color: rgba(10, 10, 35, 0.8);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -2px 10px rgba(0, 255, 255, 0.3), var(--element-shadow);
+}
+
+.input-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#chat-input {
+    flex-grow: 1;
+    background-color: var(--input-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 10px 15px;
+    font-family: var(--font-family);
+    resize: none; /* Prevent manual resize, JS will handle height */
+    min-height: 24px; /* Approx 1 row */
+    max-height: 120px; /* Approx 5 rows */
+    overflow-y: auto; /* Scroll if content exceeds max-height */
+    box-shadow: inset 0 0 5px rgba(0, 255, 255, 0.2), var(--element-shadow);
+}
+
+#chat-input::placeholder {
+    color: var(--secondary-color);
+    opacity: 0.7;
+}
+
+#chat-input:focus {
+    outline: none;
+    box-shadow: var(--led-glow-soft), inset 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+/* Scrollbar styling (Webkit browsers) */
+.chat-container::-webkit-scrollbar, #chat-input::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-container::-webkit-scrollbar-track, #chat-input::-webkit-scrollbar-track {
+    background: var(--primary-color);
+    border-radius: 10px;
+}
+
+.chat-container::-webkit-scrollbar-thumb, #chat-input::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+    border-radius: 10px;
+    border: 2px solid var(--primary-color);
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover, #chat-input::-webkit-scrollbar-thumb:hover {
+    background-color: var(--accent-color);
+}
+
+/* Modal Styling */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7); /* Dim background */
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: var(--primary-color);
+    margin: 10% auto;
+    padding: 30px;
+    border: 2px solid var(--secondary-color);
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: var(--led-glow-strong), 0 0 60px rgba(0,0,0,0.5), var(--element-shadow);
+    color: var(--text-color);
+}
+
+.modal-content h2 {
+    color: var(--secondary-color);
+    text-shadow: var(--led-glow-soft), var(--text-shadow-strong);
+    margin-top: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.close-button {
+    color: var(--accent-color);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    transition: color 0.3s, text-shadow 0.3s;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--secondary-color);
+    text-shadow: var(--led-glow-soft);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.settings-group {
+    margin-bottom: 20px;
+}
+
+.settings-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--secondary-color);
+}
+
+.settings-group input[type="text"],
+.settings-group select {
+    width: calc(100% - 22px); /* Account for padding and border */
+    padding: 10px;
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-family: var(--font-family);
+}
+
+.settings-group input[type="text"]:focus,
+.settings-group select:focus {
+    outline: none;
+    box-shadow: var(--led-glow-soft);
+}
+
+.settings-group button {
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-weight: bold;
+    transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
+    text-transform: uppercase;
+    box-shadow: var(--element-shadow);
+}
+
+.settings-group button:hover {
+    background-color: var(--accent-color);
+    box-shadow: 0 0 8px var(--accent-color), var(--element-shadow);
+    transform: translateY(-2px);
+}
+
+.settings-group button.danger-button {
+    background-color: var(--accent-color); /* Default to accent, can be overridden if needed */
+    color: white;
+}
+.settings-group button.danger-button:hover {
+    background-color: color-mix(in srgb, var(--accent-color) 70%, black); /* Darken accent color */
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent-color) 70%, black);
+}
+
+
+.settings-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--border-color);
+    margin-top: 20px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.settings-subtitle {
+    color: var(--secondary-color);
+    text-shadow: var(--led-glow-soft);
+    margin-top: 10px;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    border-bottom: 1px dashed var(--border-color);
+    padding-bottom: 8px;
+}
+.settings-subtitle .fas {
+    margin-right: 8px;
+}
+
+
+#model-status {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+/* For Font Awesome icons if not loaded, provide fallback */
+.fas {
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+}
+.fa-robot::before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f544"; }
+.fa-cog::before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f013"; }
+.fa-plus::before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f067"; }
+.fa-paper-plane::before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f1d8"; }
+.fa-cogs::before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f085"; }
+.fa-palette::before { font-family: "Font Awesome 6 Free"; font-weight: 900; content: "\f53f"; }
+
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+        border: none;
+    }
+
+    header, footer {
+        padding: 10px 15px;
+    }
+
+    .logo {
+        font-size: 1.2em;
+    }
+
+    .icon-button {
+        font-size: 1em;
+        padding: 6px 10px;
+    }
+
+    #chat-input {
+        padding: 8px 12px;
+    }
+
+    .modal-content {
+        margin: 5% auto;
+        width: 90%;
+        padding: 20px;
+    }
+}
