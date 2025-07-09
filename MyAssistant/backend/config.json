@@ -1,0 +1,17 @@
+{
+  "model_backend": "ollama",
+  "ollama_url": "http://localhost:11434",
+  "lm_studio_url": "http://localhost:1234",
+  "active_model_url": "http://localhost:11434",
+  "models": [],
+  "settings": {
+    "led_color": "blue",
+    "led_brightness": 80,
+    "led_speed": 50,
+    "led_pulse_rate": 60,
+    "enable_chat_history": true,
+    "enable_rag": true,
+    "enable_file_uploads": true,
+    "enable_workspace": true
+  }
+}
