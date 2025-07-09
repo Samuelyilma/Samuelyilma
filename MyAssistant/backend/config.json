@@ -1,0 +1,16 @@
+{
+    "ollama_base_url": "http://localhost:11434",
+    "default_model": "gemma:4b",
+    "rag_enabled": true,
+    "chat_history_enabled": true,
+    "led_settings": {
+        "mode": "reactive",
+        "color_scheme": "neon_blue",
+        "intensity": 0.8,
+        "mouse_glow_sync": true,
+        "typing_pulse_effect": true
+    },
+    "chroma_db_path": "knowledge_base",
+    "rag_collection_name": "local_assistant_knowledge",
+    "embedding_model_name": "all-MiniLM-L6-v2"
+}

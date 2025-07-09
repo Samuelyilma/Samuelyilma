@@ -1,0 +1,535 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@300;400;700&display=swap');
+
+:root {
+    --primary-glow-color: #00ffff; /* Neon Blue */
+    --secondary-glow-color: #ff00ff; /* Purple */
+    --error-glow-color: #ff0000; /* Red */
+    --text-color: #e0e0e0;
+    --bg-color: #0a0f1a; /* Dark blueish background */
+    --panel-bg-color: rgba(15, 20, 30, 0.65); /* Darker, less transparent panel */
+    --panel-border-color: var(--primary-glow-color);
+    --input-bg-color: #101520;
+    --input-border-color: var(--primary-glow-color);
+    --button-bg-color: var(--primary-glow-color);
+    --button-text-color: #000000;
+    --glow-intensity: 5px;
+    --glow-intensity-strong: 10px;
+    --font-primary: 'Orbitron', sans-serif; /* Sci-fi titles */
+    --font-secondary: 'Roboto Mono', monospace; /* Body text, code */
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-secondary);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    position: relative; /* For mouse glow */
+}
+
+.mouse-glow {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-glow-color);
+    opacity: 0; /* Initially hidden */
+    box-shadow: 0 0 15px 10px var(--primary-glow-color), 0 0 25px 15px var(--primary-glow-color);
+    pointer-events: none; /* So it doesn't interfere with clicks */
+    transition: opacity 0.3s ease-out, transform 0.1s ease-out;
+    z-index: 9999;
+    filter: blur(10px); /* Soft glow */
+}
+
+
+.container {
+    display: flex;
+    width: 95vw;
+    height: 90vh;
+    max-width: 1600px;
+    max-height: 900px;
+    background-color: rgba(0,0,0,0.3); /* Slight backdrop for panels */
+    border: 1px solid var(--panel-border-color);
+    box-shadow: 0 0 var(--glow-intensity-strong) var(--panel-border-color),
+                inset 0 0 var(--glow-intensity) var(--panel-border-color);
+    border-radius: 10px;
+    overflow: hidden; /* Ensure child panels don't break border radius */
+}
+
+h1, h2, h3 {
+    font-family: var(--font-primary);
+    color: var(--primary-glow-color);
+    text-shadow: 0 0 5px var(--primary-glow-color);
+    margin-top: 0;
+}
+
+/* Base Panel Styling */
+.panel {
+    background-color: var(--panel-bg-color);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Allow scrolling within panels */
+}
+
+/* Workspace Panel */
+.workspace-panel {
+    width: 20%;
+    min-width: 250px;
+    border-right: 1px solid var(--panel-border-color);
+    box-shadow: inset -2px 0 5px -2px var(--panel-border-color);
+}
+
+.workspace-panel h2 {
+    margin-bottom: 15px;
+}
+
+.file-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.file-list li {
+    padding: 8px 5px;
+    margin-bottom: 5px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.file-list li:hover {
+    background-color: rgba(var(--primary-glow-color-rgb, 0, 255, 255), 0.1);
+    border-color: var(--primary-glow-color);
+    box-shadow: 0 0 5px var(--primary-glow-color);
+}
+
+/* Chat Interface */
+.chat-interface {
+    width: 60%;
+    flex-grow: 1; /* Takes remaining space */
+    padding: 0; /* No padding, handled by internal elements */
+}
+
+.chat-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--panel-border-color);
+    box-shadow: 0 2px 5px -2px var(--panel-border-color);
+    text-align: center;
+}
+.chat-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 8px;
+    max-width: 70%;
+    word-wrap: break-word;
+    line-height: 1.5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.message.user {
+    background-color: var(--input-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--primary-glow-color);
+    align-self: flex-end;
+    margin-left: auto; /* Push to right */
+}
+
+.message.assistant {
+    background-color: #182030; /* Slightly different assistant bubble */
+    color: var(--text-color);
+    border: 1px solid var(--secondary-glow-color);
+    align-self: flex-start;
+    margin-right: auto; /* Push to left */
+}
+.message.assistant.rag {
+    border-left: 3px solid #00ffaa; /* Special border for RAG messages */
+}
+.message.assistant.rag::before {
+    content: "📘 "; /* Icon for RAG */
+    margin-right: 5px;
+}
+
+.message.error {
+    background-color: rgba(var(--error-glow-color-rgb, 255,0,0), 0.2);
+    color: var(--error-glow-color);
+    border: 1px solid var(--error-glow-color);
+    align-self: center;
+    text-align: center;
+    width: fit-content;
+    max-width: 80%;
+}
+
+
+.chat-input-area {
+    display: flex;
+    padding: 15px 20px;
+    border-top: 1px solid var(--panel-border-color);
+    box-shadow: 0 -2px 5px -2px var(--panel-border-color);
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-input-area textarea {
+    flex-grow: 1;
+    padding: 12px 15px;
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--input-border-color);
+    color: var(--text-color);
+    border-radius: 6px;
+    font-family: var(--font-secondary);
+    font-size: 1em;
+    resize: none; /* Prevent manual resizing */
+    min-height: 24px; /* Start small */
+    max-height: 120px; /* Limit growth */
+    overflow-y: auto; /* Scroll if content exceeds max-height */
+    transition: box-shadow 0.2s;
+}
+
+.chat-input-area textarea.typing-pulse {
+    box-shadow: 0 0 var(--glow-intensity-strong) var(--input-border-color),
+                inset 0 0 var(--glow-intensity) var(--input-border-color);
+}
+
+.chat-input-area button {
+    padding: 12px 18px;
+    background-color: var(--button-bg-color);
+    border: none;
+    color: var(--button-text-color);
+    cursor: pointer;
+    border-radius: 6px;
+    font-family: var(--font-primary);
+    font-size: 1em;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-input-area button:hover {
+    background-color: var(--secondary-glow-color);
+    color: var(--text-color);
+    box-shadow: 0 0 var(--glow-intensity-strong) var(--secondary-glow-color);
+}
+
+.chat-input-area button#send-button {
+    /* Specific styling if needed */
+}
+.chat-input-area button#upload-button {
+    font-size: 1.5em; /* Make + icon bigger */
+    padding: 8px 12px;
+}
+
+
+/* Settings Panel */
+.settings-panel {
+    width: 20%;
+    min-width: 250px;
+    border-left: 1px solid var(--panel-border-color);
+    box-shadow: inset 2px 0 5px -2px var(--panel-border-color);
+    position: relative; /* For absolute positioning of toggle button if needed */
+    transition: transform 0.3s ease-in-out;
+    /* transform: translateX(100%); /* Initially hidden */
+}
+.settings-panel.open {
+    transform: translateX(0);
+}
+.settings-toggle-button { /* If we want a button to hide/show it */
+    position: absolute;
+    top: 10px;
+    right: 100%; /* Position it just outside the panel */
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    padding: 10px 5px;
+    background-color: var(--panel-bg-color);
+    border: 1px solid var(--panel-border-color);
+    border-right: none;
+    border-radius: 5px 0 0 5px;
+    cursor: pointer;
+    color: var(--primary-glow-color);
+    font-family: var(--font-primary);
+}
+
+
+.settings-panel h2 {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.settings-tabs {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--panel-border-color);
+}
+
+.tab-button {
+    padding: 10px 15px;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    color: var(--text-color);
+    font-family: var(--font-secondary);
+    opacity: 0.7;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-button.active {
+    color: var(--primary-glow-color);
+    opacity: 1;
+    border-bottom: 2px solid var(--primary-glow-color);
+    text-shadow: 0 0 3px var(--primary-glow-color);
+}
+
+.tab-content {
+    display: none; /* Hidden by default */
+}
+
+.tab-content.active {
+    display: block; /* Shown when tab is active */
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="url"],
+.form-group select {
+    width: calc(100% - 22px); /* Full width minus padding and border */
+    padding: 10px;
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--input-border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+    font-family: var(--font-secondary);
+}
+
+.form-group input[type="range"] {
+    width: 100%;
+}
+
+.form-group button {
+    padding: 8px 15px;
+    background-color: var(--button-bg-color);
+    border: none;
+    color: var(--button-text-color);
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: var(--font-primary);
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+.form-group button:hover {
+    background-color: var(--secondary-glow-color);
+    color: var(--text-color);
+    box-shadow: 0 0 var(--glow-intensity) var(--secondary-glow-color);
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.checkbox-group input[type="checkbox"] {
+    margin-right: 10px;
+    accent-color: var(--primary-glow-color); /* Style the checkbox itself */
+}
+
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--input-bg-color);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--primary-glow-color);
+    border-radius: 10px;
+    box-shadow: 0 0 5px var(--primary-glow-color);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-glow-color);
+    box-shadow: 0 0 8px var(--secondary-glow-color);
+}
+
+/* File upload progress/status styling (placeholder) */
+.file-upload-indicator {
+    padding: 5px;
+    margin: 5px 0;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+.file-upload-indicator.processing {
+    background-color: rgba(255, 165, 0, 0.3); /* Orangeish */
+    border-left: 3px solid orange;
+}
+.file-upload-indicator.success {
+    background-color: rgba(0, 255, 0, 0.2); /* Greenish */
+    border-left: 3px solid limegreen;
+}
+.file-upload-indicator.error {
+    background-color: rgba(255, 0, 0, 0.2); /* Reddish */
+    border-left: 3px solid var(--error-glow-color);
+}
+
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+/* Loading animation */
+.loading-animation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: var(--primary-glow-color);
+}
+.loading-animation::before {
+    content: "";
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--primary-glow-color);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .container {
+        flex-direction: column;
+        height: 100vh; /* Full height on smaller screens */
+        width: 100vw;
+        border-radius: 0;
+        border: none;
+    }
+    .panel {
+        border-radius: 0 !important; /* Remove border radius for panels on small screens */
+    }
+
+    .workspace-panel, .settings-panel {
+        width: 100%;
+        min-width: unset;
+        height: 25%; /* Example height, adjust as needed */
+        border-right: none;
+        border-left: none;
+        border-bottom: 1px solid var(--panel-border-color);
+    }
+    .chat-interface {
+        width: 100%;
+        height: 50%; /* Example height */
+    }
+    .settings-panel {
+        /* transform: translateY(100%);  Adjust for vertical slide-in if desired */
+    }
+    .settings-panel.open {
+        /* transform: translateY(0); */
+    }
+    .settings-toggle-button {
+        /* Adjust positioning if panel slides vertically */
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --glow-intensity: 3px;
+        --glow-intensity-strong: 6px;
+    }
+    h1,h2,h3 { font-size: 1.2em; }
+    .chat-messages { padding: 10px; gap: 10px; }
+    .message { max-width: 85%; }
+    .chat-input-area textarea { padding: 10px; }
+    .chat-input-area button { padding: 10px 15px; }
+}
+
+/* Color Scheme Variables - can be changed via JS */
+body.theme-neon-blue {
+    --primary-glow-color: #00ffff;
+    --primary-glow-color-rgb: 0, 255, 255;
+    --secondary-glow-color: #00aaff;
+}
+body.theme-purple {
+    --primary-glow-color: #ff00ff;
+    --primary-glow-color-rgb: 255, 0, 255;
+    --secondary-glow-color: #aa00ff;
+}
+body.theme-red {
+    --primary-glow-color: #ff0000;
+    --primary-glow-color-rgb: 255, 0, 0;
+    --secondary-glow-color: #ff4400;
+}
+body.theme-rainbow {
+    /* Rainbow might need more complex handling, perhaps animations or cycling colors */
+    --primary-glow-color: #ff00ff; /* Default to purple for rainbow if not animated */
+    --primary-glow-color-rgb: 255, 0, 255;
+    --secondary-glow-color: #00ffff;
+    /* Consider CSS animation for rainbow glow if desired */
+}
+
+/* LED Mode classes */
+body.led-off {
+    --primary-glow-color: #555; /* Dimmed or off */
+    --secondary-glow-color: #444;
+    --panel-border-color: #333;
+    /* Disable shadows or make them very subtle */
+    box-shadow: none !important;
+}
+body.led-off .panel,
+body.led-off .chat-input-area textarea,
+body.led-off .chat-input-area button,
+body.led-off .file-list li:hover {
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+body.led-off h1, body.led-off h2, body.led-off h3 {
+    text-shadow: none !important;
+    color: #aaa; /* Dimmed text color */
+}
+
+
+body.led-full-glow {
+    /* Enhance glows for full-glow mode if different from reactive */
+    --glow-intensity: 8px;
+    --glow-intensity-strong: 15px;
+}
+body.led-full-glow .container {
+    box-shadow: 0 0 20px var(--panel-border-color),
+                inset 0 0 15px var(--panel-border-color);
+}
+/* Further enhancements for full-glow can be added */
