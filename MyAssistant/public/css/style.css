@@ -2,6 +2,7 @@
 
 :root {
     --primary-glow-color: #00ffff; /* Neon Blue */
+    --primary-glow-color-rgb: 0, 255, 255; /* Added for rgba */
     --secondary-glow-color: #ff00ff; /* Purple */
     --error-glow-color: #ff0000; /* Red */
     --text-color: #e0e0e0;
@@ -12,14 +13,28 @@
     --input-border-color: var(--primary-glow-color);
     --button-bg-color: var(--primary-glow-color);
     --button-text-color: #000000;
-    --glow-intensity: 5px;
-    --glow-intensity-strong: 10px;
+    /* --glow-intensity: 5px; */ /* Will be dynamically set by JS from --glow-intensity-val */
+    /* --glow-intensity-strong: 10px; */ /* Will be dynamically set by JS from --glow-intensity-val */
+    --glow-intensity-val: 0.7; /* Default raw intensity, JS updates this */
+    --led-pulse-duration: 2s; /* Default, updated by JS */
     --font-primary: 'Orbitron', sans-serif; /* Sci-fi titles */
     --font-secondary: 'Roboto Mono', monospace; /* Body text, code */
 }
 
+@keyframes ledPulseEffectSimplified {
+    50% {
+        box-shadow:
+            inset 0 0 calc(var(--glow-intensity-val) * 8px) 1px rgba(var(--primary-glow-color-rgb), 0.4),
+            0 0 calc(var(--glow-intensity-val) * 12px) 0px var(--primary-glow-color),
+            0 0 calc(var(--glow-intensity-val) * 25px) 0px rgba(var(--primary-glow-color-rgb), 0.35);
+        border-color: var(--primary-glow-color);
+    }
+}
+
+
 body {
     background-color: var(--bg-color);
+    transition: filter 0.4s ease; /* For smooth transition when settings panel opens/closes */
     color: var(--text-color);
     font-family: var(--font-secondary);
     margin: 0;
@@ -46,6 +61,26 @@ body {
     filter: blur(10px); /* Soft glow */
 }
 
+/* Base styles for elements that will pulse - this is the 'dim' state of the pulse */
+body:not(.led-off) .container,
+body:not(.led-off) .panel, /* Includes .settings-panel, .workspace-panel, .chat-interface */
+body:not(.led-off) .chat-input-area textarea,
+body:not(.led-off) .chat-input-area button:not(#remove-image-button), /* Exclude remove image button from general pulse */
+body:not(.led-off) .floating-settings-button {
+    border: 1px solid rgba(var(--primary-glow-color-rgb), 0.6); /* Default border for pulsing items */
+    box-shadow:
+        inset 0 0 calc(var(--glow-intensity-val) * 5px) 0px rgba(var(--primary-glow-color-rgb), 0.2),
+        0 0 calc(var(--glow-intensity-val) * 7px) -1px var(--primary-glow-color),
+        0 0 calc(var(--glow-intensity-val) * 15px) -2px rgba(var(--primary-glow-color-rgb), 0.2);
+    animation: ledPulseEffectSimplified var(--led-pulse-duration) infinite ease-in-out;
+}
+/* Ensure chat-input-area itself doesn't get double borders/shadows if .panel applies to it too */
+body:not(.led-off) .chat-input-area {
+    animation: none; /* chat-input-area is a container, its children pulse */
+    box-shadow: 0 -2px 5px -2px var(--panel-border-color); /* Static structural shadow */
+    border-top: 1px solid var(--panel-border-color);
+}
+
 
 .container {
     display: flex;
@@ -54,9 +89,7 @@ body {
     max-width: 1600px;
     max-height: 900px;
     background-color: rgba(0,0,0,0.3); /* Slight backdrop for panels */
-    border: 1px solid var(--panel-border-color);
-    box-shadow: 0 0 var(--glow-intensity-strong) var(--panel-border-color),
-                inset 0 0 var(--glow-intensity) var(--panel-border-color);
+    /* border and box-shadow are now handled by the body:not(.led-off) .container rule for pulsing */
     border-radius: 10px;
     overflow: hidden; /* Ensure child panels don't break border radius */
 }
@@ -382,6 +415,74 @@ h1, h2, h3 {
     box-shadow: 0 0 8px var(--secondary-glow-color);
 }
 
+/* Floating Settings Button */
+.floating-settings-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: var(--panel-bg-color);
+    color: var(--primary-glow-color);
+    border: 2px solid var(--primary-glow-color);
+    border-radius: 50%;
+    font-size: 28px; /* Adjust for icon size */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 0 var(--glow-intensity-strong) var(--primary-glow-color);
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s;
+    z-index: 1000; /* Ensure it's above other content */
+}
+
+.floating-settings-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 calc(var(--glow-intensity-strong) * 1.5) var(--primary-glow-color);
+    background-color: var(--primary-glow-color);
+    color: var(--button-text-color);
+}
+
+.floating-settings-button.clicked-animation { /* For pulse on click */
+    animation: pulseAnimation 0.3s ease-out;
+}
+@keyframes pulseAnimation {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+
+/* Settings Panel - Revised for Slide-out */
+.settings-panel {
+    /* ... existing common panel styles ... */
+    position: fixed; /* Changed from part of flex layout */
+    top: 0;
+    right: 0;
+    width: 300px; /* Or desired width, e.g., 25% of viewport */
+    max-width: 80vw; /* Max width on small screens */
+    height: 100vh;
+    transform: translateX(100%); /* Initially off-screen */
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth slide */
+    z-index: 999; /* Below button if button needs to overlap slightly, but above content */
+    /* border-left: 1px solid var(--panel-border-color); */ /* Re-evaluate if needed with fixed */
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5), inset 2px 0 5px -2px var(--panel-border-color); /* More prominent shadow */
+    /* Ensure .panel base styles are still applied or copied here if it's not inheriting */
+}
+
+.settings-panel.open {
+    transform: translateX(0);
+}
+
+/* Main content dim/blur effect */
+/* This class is added to #main-container when settings panel is open */
+#main-container.settings-open {
+    filter: blur(4px) brightness(0.6);
+    transition: filter 0.4s ease;
+    pointer-events: none; /* Prevent interaction with background content */
+}
+
+
 /* File upload progress/status styling (placeholder) */
 .file-upload-indicator {
     padding: 5px;
@@ -432,37 +533,34 @@ h1, h2, h3 {
 
 /* Responsive adjustments */
 @media (max-width: 1200px) {
+    /* .container might not need these if settings panel is fixed */
+    /*
     .container {
         flex-direction: column;
-        height: 100vh; /* Full height on smaller screens */
+        height: 100vh;
         width: 100vw;
         border-radius: 0;
         border: none;
     }
-    .panel {
-        border-radius: 0 !important; /* Remove border radius for panels on small screens */
+    */
+    .panel:not(.settings-panel) { /* Apply to workspace and chat if they were part of original mobile layout */
+       /* border-radius: 0 !important; */
     }
 
-    .workspace-panel, .settings-panel {
-        width: 100%;
+    .workspace-panel { /* Adjust if it was full width */
+        /* width: 100%;
         min-width: unset;
-        height: 25%; /* Example height, adjust as needed */
+        height: 25%;
         border-right: none;
-        border-left: none;
-        border-bottom: 1px solid var(--panel-border-color);
+        border-bottom: 1px solid var(--panel-border-color); */
     }
-    .chat-interface {
-        width: 100%;
-        height: 50%; /* Example height */
+    .chat-interface { /* Adjust if it was full width */
+        /* width: 100%;
+        height: 50%; */
     }
-    .settings-panel {
-        /* transform: translateY(100%);  Adjust for vertical slide-in if desired */
-    }
-    .settings-panel.open {
-        /* transform: translateY(0); */
-    }
-    .settings-toggle-button {
-        /* Adjust positioning if panel slides vertically */
+
+    .settings-panel { /* Already fixed, but width can be responsive */
+        width: 320px; /* Slightly wider on medium screens */
     }
 }
 
@@ -501,6 +599,75 @@ body.theme-rainbow {
     --secondary-glow-color: #00ffff;
     /* Consider CSS animation for rainbow glow if desired */
 }
+
+
+/* Chat Input Image Preview */
+.chat-input-area {
+    /* ... existing ... */
+    position: relative; /* For positioning preview area if needed */
+    flex-wrap: wrap; /* Allow preview to sit above/below textarea if it gets too wide */
+}
+
+.image-preview-area {
+    display: flex; /* Use flex to manage items inside */
+    align-items: center;
+    padding: 5px;
+    margin-bottom: 5px; /* Space between preview and textarea */
+    background-color: var(--input-bg-color); /* Same as input */
+    border-radius: 5px;
+    border: 1px solid var(--input-border-color);
+    width: calc(100% - 12px); /* Take full width of chat-input-area less padding */
+    box-sizing: border-box;
+}
+
+.image-preview-area.hidden {
+    display: none;
+}
+
+#chat-image-thumbnail {
+    max-height: 60px;
+    max-width: 100px;
+    border-radius: 4px;
+    margin-right: 10px;
+    object-fit: cover;
+}
+
+#remove-image-button {
+    background: var(--error-glow-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    line-height: 18px; /* Center the 'x' */
+    text-align: center;
+    cursor: pointer;
+    margin-left: auto; /* Push to the right */
+    box-shadow: 0 0 5px var(--error-glow-color);
+}
+#remove-image-button:hover {
+    opacity: 0.8;
+    box-shadow: 0 0 8px var(--error-glow-color);
+}
+
+.chat-input-area button#upload-image-button {
+    font-size: 1.5em;
+    padding: 8px 12px;
+}
+
+/* Style for images in chat messages */
+.message img.chat-log-image {
+    max-width: 300px;
+    max-height: 250px;
+    border-radius: 5px;
+    margin-top: 10px; /* Space above image in message */
+    margin-bottom: 5px; /* Space below image in message */
+    display: block;
+    cursor: pointer;
+    border: 1px solid var(--input-border-color);
+}
+
 
 /* LED Mode classes */
 body.led-off {

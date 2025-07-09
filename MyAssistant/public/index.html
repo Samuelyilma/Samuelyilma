@@ -9,7 +9,7 @@
 </head>
 <body class="theme-neon-blue led-reactive"> <!-- Default theme and LED mode -->
     <div class="mouse-glow"></div> <!-- Mouse glow effect element -->
-    <div class="container">
+    <div class="container" id="main-container">
         <!-- Workspace Panel -->
         <aside class="panel workspace-panel">
             <h2>WORKSPACE_</h2>
@@ -34,15 +34,130 @@
                 <div class="message assistant">Welcome to your Personal AI Assistant. How can I help you connect to the digital frontier?</div>
             </div>
             <div class="chat-input-area">
+                <div id="image-preview-area" class="image-preview-area hidden">
+                    <img id="chat-image-thumbnail" src="#" alt="Image preview"/>
+                    <button id="remove-image-button" title="Remove image">&times;</button>
+                </div>
                 <textarea id="chat-input" placeholder="Transmit your query..." rows="1"></textarea>
                 <button id="send-button" title="Send Message">SEND</button>
-                <button id="upload-button" title="Upload File">➕</button>
-                <input type="file" id="file-upload-input" multiple style="display: none;">
+                <button id="upload-image-button" title="Attach Image">🖼️</button> <!-- Changed from upload-button and ➕ -->
+                <input type="file" id="file-upload-input" multiple style="display: none;"> <!-- Kept for workspace/knowledge upload -->
+                <input type="file" id="chat-image-input" accept="image/*" style="display: none;"> <!-- New input for chat images -->
             </div>
         </main>
 
         <!-- Settings Panel -->
         <aside class="panel settings-panel" id="settings-panel">
+            <!-- <button class="settings-toggle-button" id="settings-toggle">SETTINGS</button> -->
+            <h2>SYS_CONFIG_</h2>
+            <div class="settings-tabs">
+                <button class="tab-button active" data-tab="model-settings">Model</button>
+                <button class="tab-button" data-tab="led-settings">Lighting</button>
+                <button class="tab-button" data-tab="knowledge-settings">Knowledge</button>
+            </div>
+
+            <!-- Model Settings Tab -->
+            <div id="model-settings" class="tab-content active">
+                <h3>Ollama Configuration</h3>
+                <div class="form-group">
+                    <label for="ollama-url">Ollama Base URL:</label>
+                    <input type="url" id="ollama-url" value="http://localhost:11434">
+                </div>
+                <div class="form-group">
+                    <label for="model-selector">Select Model:</label>
+                    <select id="model-selector">
+                        <!-- Options populated by JS -->
+                        <option value="gemma:4b">gemma:4b (Loading...)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button id="test-connection-button">Ping Model</button>
+                    <span id="connection-status"></span>
+                </div>
+                <div id="model-loading-animation" class="loading-animation hidden">AI Core Syncing...</div>
+            </div>
+
+            <!-- LED Lighting Settings Tab -->
+            <div id="led-settings" class="tab-content">
+                <h3>Aesthetic Interface Matrix</h3>
+                <div class="form-group">
+                    <label for="led-mode">LED Mode:</label>
+                    <select id="led-mode">
+                        <option value="reactive">Reactive</option>
+                        <option value="full-glow">Full Glow</option>
+                        <option value="off">Off</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="color-scheme">Color Scheme:</label>
+                    <select id="color-scheme">
+                        <option value="neon-blue">Neon Blue</option>
+                        <option value="purple">Cyber Purple</option>
+                        <option value="red">Magma Red</option>
+                        <option value="rainbow">Rainbow Pulse (NYI)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="glow-intensity">Glow Intensity:</label>
+                    <input type="range" id="glow-intensity" min="0" max="1" step="0.1" value="0.7">
+                </div>
+                <div class="form-group">
+                    <label for="led-pulse-speed">LED Pulse Speed (s):</label>
+                    <input type="range" id="led-pulse-speed" min="0.5" max="5" step="0.1" value="2.0">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="mouse-glow-sync" checked>
+                    <label for="mouse-glow-sync">Mouse Glow Sync</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="typing-pulse-effect" checked>
+                    <label for="typing-pulse-effect">Typing Pulse Effect</label>
+                </div>
+                <div class="form-group">
+                    <h4>Live Preview Area:</h4>
+                    <div id="led-preview" style="width:100%; height: 50px; border: 1px solid var(--primary-glow-color); background: var(--panel-bg-color); box-shadow: 0 0 var(--glow-intensity-strong) var(--primary-glow-color); transition: all 0.3s;">
+                        Preview Text
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modules & Knowledge Tab -->
+            <div id="knowledge-settings" class="tab-content">
+                <h3>Cognitive Modules & RAG</h3>
+                 <div class="checkbox-group">
+                    <input type="checkbox" id="chat-history-enabled" checked>
+                    <label for="chat-history-enabled">Enable Chat History (Local)</label>
+                </div>
+                 <div class="checkbox-group">
+                    <input type="checkbox" id="file-upload-enabled" checked disabled> <!-- Assuming always enabled for now -->
+                    <label for="file-upload-enabled">Enable File Uploads</label>
+                </div>
+                 <div class="checkbox-group">
+                    <input type="checkbox" id="workspace-enabled" checked disabled> <!-- Assuming always enabled for now -->
+                    <label for="workspace-enabled">Enable Workspace Panel</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="rag-enabled" checked>
+                    <label for="rag-enabled">Enable Managed Knowledge (RAG)</label>
+                </div>
+                <h4>Knowledge Base Management</h4>
+                <div class="form-group">
+                    <label for="knowledge-upload">Upload Document to Knowledge Base:</label>
+                    <input type="file" id="knowledge-upload-input" multiple>
+                     <!-- List of current knowledge files -->
+                </div>
+                <ul id="knowledge-file-list" class="file-list">
+                    <!-- Populated by JS -->
+                    <li>📘 my_research_notes.pdf (Processed) <button class="delete-knowledge-btn" data-id="my_research_notes.pdf">X</button></li>
+                </ul>
+                 <div id="rag-status-indicator"></div>
+            </div>
+
+        </aside>
+    </div>
+
+    <!-- Settings Panel (Moved outside main-container for blur effect) -->
+    <aside class="panel settings-panel" id="settings-panel">
             <!-- <button class="settings-toggle-button" id="settings-toggle">SETTINGS</button> -->
             <h2>SYS_CONFIG_</h2>
             <div class="settings-tabs">
@@ -143,9 +258,10 @@
                 </ul>
                  <div id="rag-status-indicator"></div>
             </div>
+    </aside>
 
-        </aside>
-    </div>
+    <button id="floating-settings-button" class="floating-settings-button" title="Open Settings">⚙️</button>
+
     <script src="js/script.js"></script>
 </body>
 </html>

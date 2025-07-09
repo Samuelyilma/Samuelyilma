@@ -75,16 +75,47 @@ def serve_static_files(path):
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    data = request.json
-    user_message = data.get('message')
-    config_override = data.get('config', {}) # Config from frontend (ollama_url, model, rag_enabled)
+    # Expect FormData; text message and config from form fields, image from files
+    user_message = request.form.get('message', '')
 
-    if not user_message:
-        return jsonify({'error': 'No message provided'}), 400
+    # Config from form fields (prefixed to avoid clashes if any)
+    config_ollama_url = request.form.get('config_ollama_url', get_config_value('ollama_base_url'))
+    config_model = request.form.get('config_model', get_config_value('default_model'))
+    config_rag_enabled_str = request.form.get('config_rag_enabled', str(get_config_value('rag_enabled')))
+    use_rag = config_rag_enabled_str.lower() == 'true'
 
-    ollama_url = config_override.get('ollama_url', get_config_value('ollama_base_url'))
-    model = config_override.get('model', get_config_value('default_model'))
-    use_rag = config_override.get('rag_enabled', get_config_value('rag_enabled'))
+    uploaded_image_file = request.files.get('image')
+    user_image_url = None # URL to be sent back to frontend for display
+
+    if not user_message and not uploaded_image_file:
+        return jsonify({'error': 'No message or image provided'}), 400
+
+    if uploaded_image_file:
+        if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], 'chat_images')):
+            os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], 'chat_images'), exist_ok=True)
+
+        filename = secure_filename(uploaded_image_file.filename)
+        image_save_path = os.path.join(app.config['UPLOAD_FOLDER'], 'chat_images', filename)
+        try:
+            uploaded_image_file.save(image_save_path)
+            # Create a URL path the frontend can use.
+            # Assuming UPLOAD_FOLDER is 'workspace', served via /api/workspace/chat_images/...
+            user_image_url = f"/api/workspace/chat_images/{filename}"
+            logging.info(f"Image '{filename}' saved to '{image_save_path}', accessible via '{user_image_url}'")
+            # For now, the text prompt to Ollama won't explicitly include image content analysis
+            # This will be handled by a multimodal model or specific image processing step in future
+        except Exception as e:
+            logging.error(f"Error saving chat image '{filename}': {e}")
+            return jsonify({'error': f'Could not save chat image: {str(e)}'}), 500
+
+    ollama_url = config_ollama_url
+    model = config_model
+
+    # Prepare the prompt for the AI
+    # If an image was uploaded, the user's text might refer to it.
+    # For true multimodal, ollama_handler and model choice would be critical.
+    # For now, AI gets the text; frontend displays image + text.
+    final_prompt_for_ai = user_message
 
     context_docs = []
     response_type = "assistant" # Default type
@@ -100,18 +131,27 @@ def chat():
             logging.error(f"RAG query failed: {e}")
             # Optionally inform user RAG failed but proceed without it
 
-    # Construct prompt
-    final_prompt = user_message
-    if context_docs:
+    if context_docs: # RAG context
         context_str = "\n\n--- Relevant Information from Knowledge Base ---\n"
         for i, doc_content in enumerate(context_docs):
             context_str += f"Document {i+1}:\n{doc_content}\n\n"
-        final_prompt = f"Based on the following information if relevant:\n{context_str}\n\nQuestion: {user_message}"
-        response_type = "rag" # Mark as RAG response
+        # Prepend RAG context to the (potentially image-contextualized) prompt
+        final_prompt_for_ai = f"Based on the following information if relevant:\n{context_str}\n\nQuestion: {final_prompt_for_ai}"
+        response_type = "rag"
 
     try:
-        ai_response = ollama_handler.generate_response(final_prompt, ollama_url, model)
-        return jsonify({'response': ai_response, 'type': response_type})
+        # Future: if ollama_handler supports image_paths for multimodal models:
+        # local_image_path_for_ollama = image_save_path if uploaded_image_file else None
+        # ai_response = ollama_handler.generate_response(final_prompt_for_ai, ollama_url, model, image_paths=[local_image_path_for_ollama] if local_image_path_for_ollama else None)
+        ai_response = ollama_handler.generate_response(final_prompt_for_ai, ollama_url, model)
+
+        response_data = {'response': ai_response, 'type': response_type}
+        # If user sent an image, include its web-accessible URL in the response
+        # This allows frontend to have a persistent URL for the user's image in the chat log
+        if user_image_url:
+            response_data['user_image_sent_url'] = user_image_url
+
+        return jsonify(response_data)
     except Exception as e:
         logging.error(f"Ollama API error: {e}")
         return jsonify({'error': str(e), 'type': 'error'}), 500
@@ -212,6 +252,15 @@ def check_ollama_status():
     except Exception as e: # Should be rare if handler catches well
         logging.error(f"Error checking Ollama model status: {e}")
         return jsonify({'available': False, 'message': str(e)}), 500
+
+@app.route('/api/workspace/<path:filepath>')
+def serve_workspace_file(filepath):
+    # This will serve files from the 'workspace' directory, including 'workspace/chat_images'.
+    # e.g. /api/workspace/chat_images/my_image.png
+    # Ensure this is secure and doesn't allow arbitrary path traversal.
+    # secure_filename on upload and direct construction here is relatively safe.
+    logging.info(f"Serving workspace file: {filepath} from {app.config['UPLOAD_FOLDER']}")
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filepath)
 
 # --- RAG - Knowledge Base Endpoints ---
 @app.route('/api/knowledge/upload', methods=['POST'])
