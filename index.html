@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexaHub - Cyberpunk AI Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Audiowide:wght@400;700&family=Exo+2:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-purple: #9d00ff;
+            --neon-cyan: #00ffff;
+            --neon-blue: #0080ff;
+            --neon-green: #00ff80;
+            --neon-orange: #ff6600;
+            --neon-yellow: #ffff00;
+            --metallic-grey: #404040;
+            --dark-bg: #0a0a0a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: var(--dark-bg);
+            color: white;
+            overflow-x: hidden;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="%2300ffff"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>') 10 10, auto;
+        }
+
+        .cyberpunk-container {
+            background: linear-gradient(135deg, rgba(10,10,10,0.95) 0%, rgba(20,20,20,0.98) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 30px var(--neon-cyan);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .cyberpunk-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glow-border {
+            position: relative;
+        }
+
+        .glow-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid transparent;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan), var(--neon-blue)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            animation: borderGlow 3s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(180deg); }
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor;
+            letter-spacing: 1px;
+            transform: translateZ(20px);
+        }
+
+        .neon-button {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transform: translateZ(10px);
+        }
+
+        .neon-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .neon-button:hover::before {
+            left: 100%;
+        }
+
+        .neon-button:hover {
+            box-shadow: 0 0 20px var(--neon-cyan);
+            transform: translateY(-2px) translateZ(15px);
+        }
+
+        .chat-input {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            resize: none;
+            transition: all 0.3s ease;
+            transform: translateZ(20px);
+        }
+
+        .chat-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px var(--neon-cyan);
+            border-color: var(--neon-pink);
+        }
+
+        .chat-bubble {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--neon-purple);
+            box-shadow: 0 0 15px rgba(157, 0, 255, 0.3);
+            animation: bubbleGlow 2s ease-in-out infinite alternate;
+            max-width: 80%;
+            transform: translateZ(15px);
+        }
+
+        @keyframes bubbleGlow {
+            0% { box-shadow: 0 0 15px rgba(157, 0, 255, 0.3); }
+            100% { box-shadow: 0 0 25px rgba(157, 0, 255, 0.7); }
+        }
+
+        .sidebar-item {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateZ(10px);
+        }
+
+        .sidebar-item:hover {
+            background: rgba(0,0,0,0.5);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+            transform: translateX(5px) translateZ(15px);
+        }
+
+        .sidebar-item.active {
+            background: rgba(0,0,0,0.7);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 20px rgba(255,0,255,0.5);
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            animation: typingDot 1.5s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.3s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.6s; }
+
+        @keyframes typingDot {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFloat 3s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 0;
+                transform: translateY(0) translateX(0);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) translateX(50px);
+            }
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 4px;
+        }
+
+        .settings-panel {
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--neon-purple);
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(157, 0, 255, 0.5);
+            transform: scale(0.95) translateZ(0);
+            opacity: 0;
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .settings-panel.show {
+            transform: scale(1) translateZ(20px);
+            opacity: 1;
+        }
+
+        .theme-preview {
+            width: 100px;
+            height: 60px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(10px);
+        }
+
+        .theme-preview:hover {
+            transform: scale(1.1) translateZ(15px);
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .theme-preview.active {
+            border-color: white;
+            box-shadow: 0 0 30px currentColor;
+        }
+
+        .theme-preview::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.1) 55%, transparent 60%);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(-100%) translateX(-100%); }
+            100% { transform: translateY(100%) translateX(100%); }
+        }
+
+        .file-chip {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--neon-blue);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+            animation: chipGlow 2s ease-in-out infinite alternate;
+            transform: translateZ(10px);
+        }
+
+        @keyframes chipGlow {
+            0% { box-shadow: 0 0 10px rgba(0,128,255,0.3); }
+            100% { box-shadow: 0 0 20px rgba(0,128,255,0.7); }
+        }
+
+        .upload-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .led-control-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .led-control-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .3d-panel {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .3d-panel:hover {
+            transform: rotateY(5deg) rotateX(2deg) translateZ(20px);
+        }
+
+        .app-title {
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 900;
+            letter-spacing: 2px;
+            transform: translateZ(30px);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* 3D and Cyberpunk Enhancements */
+        .circuit-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M10,10 L90,10 L90,20 L80,20 L80,30 L90,30 L90,40 L70,40 L70,50 L80,50 L80,60 L90,60 L90,70 L80,70 L80,80 L70,80 L70,90 L60,90 L60,80 L50,80 L50,90 L40,90 L40,80 L30,80 L30,90 L20,90 L20,80 L10,80 L10,70 L20,70 L20,60 L10,60 L10,50 L20,50 L20,40 L10,40 L10,30 L20,30 L20,20 L10,20 Z" fill="none" stroke="rgba(0,255,255,0.1)" stroke-width="0.5"/></svg>');
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .digital-rain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .rain-drop {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: linear-gradient(to bottom, transparent, var(--neon-cyan));
+            animation: rain-fall linear infinite;
+        }
+
+        @keyframes rain-fall {
+            0% { transform: translateY(-100px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .grid-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hologram-effect {
+            position: relative;
+        }
+
+        .hologram-effect::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1), rgba(0,128,255,0.1));
+            pointer-events: none;
+            animation: hologramPulse 3s infinite alternate;
+            z-index: 1;
+        }
+
+        @keyframes hologramPulse {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+
+        .glitch-effect {
+            position: relative;
+        }
+
+        .glitch-effect::before,
+        .glitch-effect::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        .glitch-effect::before {
+            color: var(--neon-green);
+            z-index: -1;
+            animation: glitch-anim-1 2s infinite linear alternate-reverse;
+        }
+
+        .glitch-effect::after {
+            color: var(--neon-pink);
+            z-index: -2;
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim-1 {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% { transform: translate(0); }
+            20% { transform: translate(2px, -2px); }
+            40% { transform: translate(2px, 2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(-2px, 2px); }
+            100% { transform: translate(0); }
+        }
+
+        .neon-glow {
+            filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor) drop-shadow(0 0 15px currentColor);
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            box-shadow: 0 0 15px var(--neon-cyan);
+            mix-blend-mode: screen;
+        }
+
+        .cursor-trail {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--neon-pink);
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9998;
+            opacity: 0.7;
+            box-shadow: 0 0 10px var(--neon-pink);
+            mix-blend-mode: screen;
+            transition: all 0.1s ease;
+        }
+
+        .depth-layer {
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .depth-element {
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: all 0.3s ease;
+        }
+
+        .depth-element:nth-child(1) {
+            transform: translateZ(20px);
+        }
+
+        .depth-element:nth-child(2) {
+            transform: translateZ(10px);
+        }
+
+        .depth-element:nth-child(3) {
+            transform: translateZ(0);
+        }
+
+        .depth-element:nth-child(4) {
+            transform: translateZ(-10px);
+        }
+
+        .depth-element:nth-child(5) {
+            transform: translateZ(-20px);
+        }
+
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateZ(10px); }
+            50% { transform: translateY(-10px) translateZ(15px); }
+        }
+
+        .pulse-ring {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0.8);
+            opacity: 0;
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.8;
+            }
+            80%, 100% {
+                transform: scale(2.4);
+                opacity: 0;
+            }
+        }
+
+        .cylinder-panel {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .cylinder-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+            border-radius: 20px;
+            z-index: 1;
+        }
+
+        .cylinder-panel::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 45%, rgba(255,255,255,0.1) 55%, transparent 60%);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(-100%) translateX(-100%); }
+            100% { transform: translateY(100%) translateX(100%); }
+        }
+
+        .hologram-text {
+            font-family: 'Audiowide', cursive;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+            animation: hologram-flicker 3s infinite alternate;
+        }
+
+        @keyframes hologram-flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                opacity: 1;
+                text-shadow: 0 0 10px var(--neon-cyan);
+            }
+            20%, 24%, 55% {
+                opacity: 0.8;
+                text-shadow: none;
+            }
+        }
+
+        .upload-area {
+            border: 2px dashed var(--neon-cyan);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .upload-area:hover {
+            background: rgba(0,0,0,0.5);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 20px rgba(255,0,255,0.3);
+        }
+
+        .upload-area.dragover {
+            background: rgba(0,0,0,0.7);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 30px rgba(0,255,128,0.5);
+        }
+
+        .model-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--neon-blue);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .model-card:hover {
+            background: rgba(0,0,0,0.6);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0,255,255,0.3);
+            transform: translateX(5px);
+        }
+
+        .model-card.selected {
+            background: rgba(0,0,0,0.7);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 20px rgba(255,0,255,0.5);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.3);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--neon-cyan);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .connection-status.connected {
+            color: var(--neon-green);
+        }
+
+        .connection-status.disconnected {
+            color: var(--neon-red);
+        }
+
+        .connection-status.connecting {
+            color: var(--neon-yellow);
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: var(--neon-cyan);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .glowing-button {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glowing-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .glowing-button:hover::before {
+            left: 100%;
+        }
+
+        .glowing-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple), var(--neon-cyan), var(--neon-blue));
+            opacity: 0.5;
+            filter: blur(5px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Digital Rain Background -->
+    <div class="digital-rain" id="digital-rain"></div>
+
+    <!-- Grid Background -->
+    <div class="grid-background"></div>
+
+    <!-- Circuit Overlay -->
+    <div class="circuit-overlay"></div>
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-black bg-opacity-50 backdrop-filter backdrop-blur-md border-r border-cyan-500 border-opacity-30 p-4 z-10">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold app-title mb-2">NEXAHUB</h1>
+                <div class="flex items-center justify-center gap-2">
+                    <div id="ollama-status" class="status-indicator"></div>
+                    <span class="text-xs text-cyan-400">OLLAMA</span>
+                </div>
+                <div class="flex items-center justify-center gap-2 mt-1">
+                    <div id="lmstudio-status" class="status-indicator opacity-50"></div>
+                    <span class="text-xs text-cyan-400">LM STUDIO</span>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="sidebar-item active" data-panel="chat">
+                    <i class="fas fa-comments text-cyan-400"></i>
+                    <span>Chat</span>
+                </div>
+                <div class="sidebar-item" data-panel="settings">
+                    <i class="fas fa-cog text-pink-400"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="sidebar-item" data-panel="led-control">
+                    <i class="fas fa-lightbulb text-purple-400"></i>
+                    <span>LED Control</span>
+                </div>
+                <div class="sidebar-item" data-panel="workspace">
+                    <i class="fas fa-folder text-blue-400"></i>
+                    <span>Workspace</span>
+                </div>
+                <div class="sidebar-item" data-panel="rag-upload">
+                    <i class="fas fa-brain text-green-400"></i>
+                    <span>RAG Upload</span>
+                </div>
+                <div class="sidebar-item" data-panel="theme-switch">
+                    <i class="fas fa-palette text-yellow-400"></i>
+                    <span>Theme Switch</span>
+                </div>
+                <div class="sidebar-item" data-panel="user-profile">
+                    <i class="fas fa-user text-orange-400"></i>
+                    <span>User Profile</span>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-8">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full mx-auto mb-2 flex items-center justify-center">
+                        <i class="fas fa-user text-2xl text-white"></i>
+                    </div>
+                    <p class="text-sm text-cyan-300">OPERATOR-X7</p>
+                    <p class="text-xs text-gray-400">Security Level: ALPHA</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col relative">
+            <!-- Header -->
+            <div class="p-6 border-b border-cyan-500 border-opacity-30 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-2 h-8 bg-gradient-to-b from-pink-500 to-cyan-500 rounded"></div>
+                    <h2 class="text-xl font-bold neon-text text-cyan-400">AI TERMINAL v2.0</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="connection-status disconnected" id="server-connection">
+                        <div class="loading-spinner"></div>
+                        <span>Connecting to servers...</span>
+                    </div>
+                    <button id="start-nexa" class="neon-button text-xs py-2 px-4 glowing-button">
+                        <i class="fas fa-play mr-2"></i>START NEXA
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div id="chat-container" class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                <div class="space-y-4">
+                    <div class="chat-bubble self-start">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm mb-1 hologram-text">NEXAHUB AI</p>
+                                <p class="text-xs">Greetings, Operator. System is online and ready for commands. How may I assist you today?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-bubble self-end">
+                        <div class="flex items-start gap-3 justify-end">
+                            <div>
+                                <p class="text-sm mb-1">You</p>
+                                <p class="text-xs">I need to analyze the latest security protocols for the mainframe.</p>
+                            </div>
+                            <div class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-bubble self-start">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm mb-1 hologram-text">NEXAHUB AI</p>
+                                <p class="text-xs">Accessing security protocol database... <span class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <div class="file-chip">
+                            <i class="fas fa-file-pdf text-red-400"></i>
+                            <span>security_manual.pdf</span>
+                        </div>
+                        <div class="file-chip">
+                            <i class="fas fa-file-code text-blue-400"></i>
+                            <span>protocol_v3.2.js</span>
+                        </div>
+                        <div class="file-chip">
+                            <i class="fas fa-file-alt text-green-400"></i>
+                            <span>access_logs.txt</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-6 border-t border-cyan-500 border-opacity-30">
+                <div class="flex items-center gap-3">
+                    <button id="upload-button" class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300">
+                        <i class="fas fa-plus text-white"></i>
+                    </button>
+                    <div class="flex-1">
+                        <textarea id="chat-input" class="chat-input w-full h-16" placeholder="Type your message here... (Shift+Enter for new line)"></textarea>
+                    </div>
+                    <button id="send-button" class="neon-button py-3 px-6 glowing-button">
+                        <i class="fas fa-paper-plane mr-2"></i>SEND
+                    </button>
+                </div>
+                <div class="flex items-center justify-between mt-3 text-xs text-gray-400">
+                    <div class="flex items-center gap-4">
+                        <button class="hover:text-cyan-400 transition-colors duration-300">
+                            <i class="fas fa-image mr-1"></i>Image
+                        </button>
+                        <button class="hover:text-cyan-400 transition-colors duration-300">
+                            <i class="fas fa-file-pdf mr-1"></i>PDF
+                        </button>
+                        <button class="hover:text-cyan-400 transition-colors duration-300">
+                            <i class="fas fa-file-code mr-1"></i>Code
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>Model:</span>
+                        <select id="model-select" class="bg-black border border-cyan-500 rounded px-2 py-1 text-xs">
+                            <option value="">Loading models...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel (Modal) -->
+    <div id="settings-panel" class="settings-panel fixed inset-0 m-auto w-2/3 h-3/4 z-50 hidden">
+        <div class="p-8 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold neon-text text-cyan-400">SYSTEM CONFIGURATION</h3>
+                <button id="close-settings" class="neon-button text-sm py-2 px-4 glowing-button">
+                    <i class="fas fa-times mr-2"></i>CLOSE
+                </button>
+            </div>
+
+            <div class="flex-1 grid grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-pink-400">AI CONFIGURATION</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">Ollama Server URL</label>
+                                <input id="ollama-url" type="text" class="chat-input w-full" value="http://localhost:11434">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">LM Studio URL</label>
+                                <input id="lmstudio-url" type="text" class="chat-input w-full" value="http://localhost:1234">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">OpenAI API Key (Optional)</label>
+                                <input id="openai-key" type="password" class="chat-input w-full" placeholder="sk-...">
+                            </div>
+                            <button id="scan-models" class="neon-button w-full glowing-button">
+                                <i class="fas fa-search mr-2"></i>SCAN FOR AI MODELS
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-blue-400">BACKGROUND SETTINGS</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span>Enable Background Animation</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="enable-bg-animation" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Enable 3D Effects</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="enable-3d-effects" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Enable Glow Effects</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="enable-glow-effects" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Enable Sound Effects</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="enable-sound-effects">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-green-400">THEME PRESETS</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="theme-preview active" style="background: linear-gradient(45deg, #ff00ff, #9d00ff);" data-theme="neon-pink">
+                                <div class="hologram-text text-xs absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">NEON PINK</div>
+                            </div>
+                            <div class="theme-preview" style="background: linear-gradient(45deg, #0080ff, #00ffff);" data-theme="blue-circuit">
+                                <div class="hologram-text text-xs absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">BLUE CIRCUIT</div>
+                            </div>
+                            <div class="theme-preview" style="background: linear-gradient(45deg, #9d00ff, #00ff80);" data-theme="purple-rain">
+                                <div class="hologram-text text-xs absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">PURPLE RAIN</div>
+                            </div>
+                            <div class="theme-preview" style="background: linear-gradient(45deg, #00ff80, #00ffff);" data-theme="green-matrix">
+                                <div class="hologram-text text-xs absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">GREEN MATRIX</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-yellow-400">LED CONTROL</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">LED Color</label>
+                                <input id="led-color" type="color" class="w-full h-10 rounded border border-cyan-500" value="#00ffff">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Brightness</label>
+                                <input id="led-brightness" type="range" class="led-control-slider" min="0" max="100" value="70">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Pulse Speed</label>
+                                <input id="led-pulse-speed" type="range" class="led-control-slider" min="0" max="100" value="50">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Glow Intensity</label>
+                                <input id="led-glow-intensity" type="range" class="led-control-slider" min="0" max="100" value="80">
+                            </div>
+                            <button id="save-led-preset" class="neon-button w-full glowing-button">
+                                <i class="fas fa-save mr-2"></i>SAVE LED PRESET
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-orange-400">RAG UPLOAD</h4>
+                        <div class="space-y-4">
+                            <div id="upload-area" class="upload-area">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-cyan-400 mb-2"></i>
+                                <p class="text-sm mb-2">Drag & drop files here</p>
+                                <p class="text-xs text-gray-400">Supports TXT, PDF, DOCX, CSV</p>
+                                <button id="select-files" class="neon-button mt-4 text-sm py-2 px-4 glowing-button">
+                                    <i class="fas fa-plus mr-2"></i>SELECT FILES
+                                </button>
+                                <input type="file" id="file-input" class="hidden" multiple accept=".txt,.pdf,.docx,.csv">
+                            </div>
+                            <div class="upload-progress">
+                                <div id="upload-progress-bar" class="progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span id="uploaded-files-count">0 files uploaded</span>
+                                <span id="upload-status" class="text-green-400 hidden">✅ Uploaded</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LED Control Panel (Modal) -->
+    <div id="led-control-panel" class="settings-panel fixed inset-0 m-auto w-2/3 h-3/4 z-50 hidden">
+        <div class="p-8 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold neon-text text-cyan-400">LED LIGHT CONTROL</h3>
+                <button id="close-led-control" class="neon-button text-sm py-2 px-4 glowing-button">
+                    <i class="fas fa-times mr-2"></i>CLOSE
+                </button>
+            </div>
+
+            <div class="flex-1 grid grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-pink-400">LED EFFECTS</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">LED Style</label>
+                                <select id="led-style" class="chat-input w-full">
+                                    <option value="static">Static</option>
+                                    <option value="pulse">Pulse</option>
+                                    <option value="blink">Blink</option>
+                                    <option value="rainbow">Rainbow</option>
+                                    <option value="gradient">Gradient</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Primary Color</label>
+                                <input id="led-primary-color" type="color" class="w-full h-10 rounded border border-cyan-500" value="#00ffff">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Secondary Color</label>
+                                <input id="led-secondary-color" type="color" class="w-full h-10 rounded border border-cyan-500" value="#ff00ff">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-blue-400">LED ANIMATION</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">Speed</label>
+                                <input id="led-animation-speed" type="range" class="led-control-slider" min="0" max="100" value="50">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Intensity</label>
+                                <input id="led-animation-intensity" type="range" class="led-control-slider" min="0" max="100" value="80">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Direction</label>
+                                <select id="led-animation-direction" class="chat-input w-full">
+                                    <option value="left-to-right">Left to Right</option>
+                                    <option value="right-to-left">Right to Left</option>
+                                    <option value="top-to-bottom">Top to Bottom</option>
+                                    <option value="bottom-to-top">Bottom to Top</option>
+                                    <option value="random">Random</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-green-400">LED PRESETS</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="model-card selected">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm">Neon Grid</span>
+                                    <i class="fas fa-check-circle text-cyan-400"></i>
+                                </div>
+                            </div>
+                            <div class="model-card">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm">Circuit Flow</span>
+                                    <i class="fas fa-circle text-transparent"></i>
+                                </div>
+                            </div>
+                            <div class="model-card">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm">Pulse Wave</span>
+                                    <i class="fas fa-circle text-transparent"></i>
+                                </div>
+                            </div>
+                            <div class="model-card">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm">Matrix Rain</span>
+                                    <i class="fas fa-circle text-transparent"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-yellow-400">LED PREVIEW</h4>
+                        <div class="bg-black bg-opacity-50 rounded-lg p-4 h-40 flex items-center justify-center relative overflow-hidden">
+                            <div id="led-preview" class="w-full h-full flex items-center justify-center">
+                                <div class="grid grid-cols-8 gap-1">
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                    <div class="w-6 h-6 rounded bg-cyan-500 opacity-30"></div>
+                                </div>
+                            </div>
+                            <div class="pulse-ring" style="width: 100%; height: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-orange-400">APPLY TO</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Chat Bubbles</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="apply-led-chat" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">UI Elements</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="apply-led-ui" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Background</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="apply-led-bg">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Panel (Modal) -->
+    <div id="user-profile-panel" class="settings-panel fixed inset-0 m-auto w-2/3 h-3/4 z-50 hidden">
+        <div class="p-8 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold neon-text text-cyan-400">USER PROFILE</h3>
+                <button id="close-user-profile" class="neon-button text-sm py-2 px-4 glowing-button">
+                    <i class="fas fa-times mr-2"></i>CLOSE
+                </button>
+            </div>
+
+            <div class="flex-1 grid grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-pink-400">ACCOUNT SETTINGS</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">Display Name</label>
+                                <input id="display-name" type="text" class="chat-input w-full" value="OPERATOR-X7">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Email</label>
+                                <input id="user-email" type="email" class="chat-input w-full" value="operator@nexahub.ai">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Security Level</label>
+                                <select id="security-level" class="chat-input w-full">
+                                    <option>ALPHA</option>
+                                    <option>BETA</option>
+                                    <option>GAMMA</option>
+                                    <option>DELTA</option>
+                                </select>
+                            </div>
+                            <button id="save-profile" class="neon-button w-full glowing-button">
+                                <i class="fas fa-save mr-2"></i>SAVE PROFILE
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-blue-400">SECURITY SETTINGS</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">Change Password</label>
+                                <input id="current-password" type="password" class="chat-input w-full" placeholder="Current password">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">New Password</label>
+                                <input id="new-password" type="password" class="chat-input w-full" placeholder="New password">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Confirm Password</label>
+                                <input id="confirm-password" type="password" class="chat-input w-full" placeholder="Confirm new password">
+                            </div>
+                            <button id="change-password" class="neon-button w-full glowing-button">
+                                <i class="fas fa-key mr-2"></i>CHANGE PASSWORD
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-green-400">ACCOUNT ACTIVITY</h4>
+                        <div class="space-y-4">
+                            <div class="bg-black bg-opacity-50 rounded-lg p-4">
+                                <h5 class="text-sm font-bold mb-2">Recent Activity</h5>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Logged in from localhost</span>
+                                        <span class="text-cyan-400">Just now</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Chat session started</span>
+                                        <span class="text-cyan-400">2 minutes ago</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Security protocol updated</span>
+                                        <span class="text-cyan-400">1 hour ago</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Account created</span>
+                                        <span class="text-cyan-400">1 day ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-yellow-400">CHAT HISTORY</h4>
+                        <div class="space-y-4">
+                            <div class="bg-black bg-opacity-50 rounded-lg p-4 h-40 overflow-y-auto custom-scrollbar">
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Security Protocol Analysis</span>
+                                        <span class="text-cyan-400">Today, 2:34 PM</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Mainframe Optimization</span>
+                                        <span class="text-cyan-400">Today, 11:20 AM</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Data Breach Prevention</span>
+                                        <span class="text-cyan-400">Yesterday, 4:15 PM</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>Network Security Audit</span>
+                                        <span class="text-cyan-400">Yesterday, 10:30 AM</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span>AI Model Training</span>
+                                        <span class="text-cyan-400">2 days ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between">
+                                <button id="export-history" class="neon-button text-xs py-2 px-4 glowing-button">
+                                    <i class="fas fa-download mr-2"></i>EXPORT
+                                </button>
+                                <button id="clear-history" class="neon-button text-xs py-2 px-4 glowing-button">
+                                    <i class="fas fa-trash-alt mr-2"></i>CLEAR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-orange-400">PRIVACY SETTINGS</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Remember me</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="remember-me" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Save chat history</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="save-history" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Use biometrics</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="use-biometrics">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <button id="export-data" class="neon-button w-full glowing-button">
+                                <i class="fas fa-database mr-2"></i>EXPORT ALL DATA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workspace Panel (Modal) -->
+    <div id="workspace-panel" class="settings-panel fixed inset-0 m-auto w-2/3 h-3/4 z-50 hidden">
+        <div class="p-8 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold neon-text text-cyan-400">WORKSPACE</h3>
+                <button id="close-workspace" class="neon-button text-sm py-2 px-4 glowing-button">
+                    <i class="fas fa-times mr-2"></i>CLOSE
+                </button>
+            </div>
+
+            <div class="flex-1 grid grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-pink-400">PROJECTS</h4>
+                        <div class="space-y-4">
+                            <div class="model-card">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-bold">Security Protocol Analysis</p>
+                                        <p class="text-xs text-gray-400">Last edited: Today, 2:34 PM</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="text-cyan-400 hover:text-cyan-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="model-card">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-bold">Mainframe Optimization</p>
+                                        <p class="text-xs text-gray-400">Last edited: Today, 11:20 AM</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="text-cyan-400 hover:text-cyan-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="model-card">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-bold">Network Security Audit</p>
+                                        <p class="text-xs text-gray-400">Last edited: Yesterday, 4:15 PM</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="text-cyan-400 hover:text-cyan-300">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-400 hover:text-red-300">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="new-project" class="neon-button w-full glowing-button">
+                                <i class="fas fa-plus mr-2"></i>NEW PROJECT
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-blue-400">AI MODELS</h4>
+                        <div id="model-list" class="space-y-2">
+                            <div class="text-xs text-gray-400 text-center py-4">Loading models...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-green-400">RECENT FILES</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between p-2 bg-black bg-opacity-50 rounded">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-file-pdf text-red-400"></i>
+                                    <div>
+                                        <p class="text-xs font-bold">security_manual.pdf</p>
+                                        <p class="text-xs text-gray-400">2.4 MB</p>
+                                    </div>
+                                </div>
+                                <button class="text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-black bg-opacity-50 rounded">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-file-code text-blue-400"></i>
+                                    <div>
+                                        <p class="text-xs font-bold">protocol_v3.2.js</p>
+                                        <p class="text-xs text-gray-400">156 KB</p>
+                                    </div>
+                                </div>
+                                <button class="text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-black bg-opacity-50 rounded">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-file-alt text-green-400"></i>
+                                    <div>
+                                        <p class="text-xs font-bold">access_logs.txt</p>
+                                        <p class="text-xs text-gray-400">89 KB</p>
+                                    </div>
+                                </div>
+                                <button class="text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-yellow-400">QUICK ACCESS</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-bolt mr-2"></i>QUICK SCAN
+                            </button>
+                            <button class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-shield-alt mr-2"></i>SECURITY CHECK
+                            </button>
+                            <button class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-code mr-2"></i>CODE ANALYSIS
+                            </button>
+                            <button class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-chart-line mr-2"></i>PERFORMANCE REPORT
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-orange-400">SYSTEM STATUS</h4>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1">
+                                    <span>Ollama Server</span>
+                                    <span id="ollama-status" class="text-green-400">Connected</span>
+                                </div>
+                                <div class="w-full bg-black bg-opacity-50 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1">
+                                    <span>LM Studio</span>
+                                    <span id="lmstudio-status" class="text-yellow-400">Connecting</span>
+                                </div>
+                                <div class="w-full bg-black bg-opacity-50 rounded-full h-2">
+                                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 60%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1">
+                                    <span>Memory Usage</span>
+                                    <span class="text-cyan-400">4.2 GB / 16 GB</span>
+                                </div>
+                                <div class="w-full bg-black bg-opacity-50 rounded-full h-2">
+                                    <div class="bg-cyan-500 h-2 rounded-full" style="width: 26%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1">
+                                    <span>CPU Usage</span>
+                                    <span class="text-pink-400">38%</span>
+                                </div>
+                                <div class="w-full bg-black bg-opacity-50 rounded-full h-2">
+                                    <div class="bg-pink-500 h-2 rounded-full" style="width: 38%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RAG Upload Panel (Modal) -->
+    <div id="rag-upload-panel" class="settings-panel fixed inset-0 m-auto w-2/3 h-3/4 z-50 hidden">
+        <div class="p-8 h-full flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold neon-text text-cyan-400">RAG UPLOAD SYSTEM</h3>
+                <button id="close-rag-upload" class="neon-button text-sm py-2 px-4 glowing-button">
+                    <i class="fas fa-times mr-2"></i>CLOSE
+                </button>
+            </div>
+
+            <div class="flex-1 grid grid-cols-2 gap-8">
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-pink-400">DOCUMENT UPLOAD</h4>
+                        <div class="space-y-4">
+                            <div id="rag-upload-area" class="upload-area">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-cyan-400 mb-2"></i>
+                                <p class="text-sm mb-2">Drag & drop files here</p>
+                                <p class="text-xs text-gray-400">Supports TXT, PDF, DOCX, CSV</p>
+                                <button id="rag-select-files" class="neon-button mt-4 text-sm py-2 px-4 glowing-button">
+                                    <i class="fas fa-plus mr-2"></i>SELECT FILES
+                                </button>
+                                <input type="file" id="rag-file-input" class="hidden" multiple accept=".txt,.pdf,.docx,.csv">
+                            </div>
+                            <div class="upload-progress">
+                                <div id="rag-upload-progress-bar" class="progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span id="rag-uploaded-files-count">0 files uploaded</span>
+                                <span id="rag-upload-status" class="text-green-400 hidden">✅ Uploaded</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-blue-400">UPLOAD SETTINGS</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm mb-2">Chunk Size</label>
+                                <select id="rag-chunk-size" class="chat-input w-full">
+                                    <option value="500">Small (500 chars)</option>
+                                    <option value="1000" selected>Medium (1000 chars)</option>
+                                    <option value="2000">Large (2000 chars)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-2">Embedding Model</label>
+                                <select id="rag-embedding-model" class="chat-input w-full">
+                                    <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+                                    <option value="all-minilm-l6-v2">all-minilm-l6-v2</option>
+                                    <option value="text-embedding-3-small">text-embedding-3-small</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm">Auto-process files</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="rag-auto-process" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <button id="process-rag-files" class="neon-button w-full glowing-button">
+                                <i class="fas fa-cogs mr-2"></i>PROCESS UPLOADED FILES
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-green-400">UPLOADED DOCUMENTS</h4>
+                        <div id="uploaded-documents" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                            <div class="text-xs text-gray-400 text-center py-4">No documents uploaded yet</div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-yellow-400">RAG KNOWLEDGE BASE</h4>
+                        <div class="space-y-2">
+                            <div class="bg-black bg-opacity-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h5 class="text-sm font-bold">Knowledge Base Status</h5>
+                                    <span id="rag-status" class="text-xs text-yellow-400">Initializing</span>
+                                </div>
+                                <div class="w-full bg-black bg-opacity-50 rounded-full h-2 mb-2">
+                                    <div id="rag-progress" class="bg-yellow-500 h-2 rounded-full" style="width: 0%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-400">
+                                    <span id="rag-docs-count">0 documents</span>
+                                    <span id="rag-vectors-count">0 vectors</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between">
+                                <button id="clear-rag" class="neon-button text-xs py-2 px-4 glowing-button">
+                                    <i class="fas fa-trash-alt mr-2"></i>CLEAR KNOWLEDGE BASE
+                                </button>
+                                <button id="optimize-rag" class="neon-button text-xs py-2 px-4 glowing-button">
+                                    <i class="fas fa-rocket mr-2"></i>OPTIMIZE
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="3d-panel cylinder-panel">
+                        <h4 class="text-lg font-bold mb-4 neon-text text-orange-400">QUICK ACTIONS</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="test-rag" class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-vial mr-2"></i>TEST RAG
+                            </button>
+                            <button id="export-rag" class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-file-export mr-2"></i>EXPORT DATA
+                            </button>
+                            <button id="backup-rag" class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-database mr-2"></i>BACKUP
+                            </button>
+                            <button id="share-rag" class="neon-button py-3 px-4 text-xs glowing-button">
+                                <i class="fas fa-share-alt mr-2"></i>SHARE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Cursor -->
+    <div id="custom-cursor" class="custom-cursor"></div>
+    <div id="cursor-trail" class="cursor-trail"></div>
+
+    <script>
+        // Global variables
+        let currentTheme = 'neon-pink';
+        let ledColor = '#00ffff';
+        let ledBrightness = 70;
+        let ledPulseSpeed = 50;
+        let ledGlowIntensity = 80;
+        let models = [];
+        let selectedModel = '';
+        let chatHistory = [];
+        let uploadedFiles = [];
+        let ollamaConnected = false;
+        let lmStudioConnected = false;
+        let aiServer = 'ollama'; // Default server
+        let ollamaUrl = 'http://localhost:11434';
+        let lmStudioUrl = 'http://localhost:1234';
+        let openaiKey = '';
+
+        // DOM Elements
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const chatContainer = document.getElementById('chat-container');
+        const settingsPanel = document.getElementById('settings-panel');
+        const ledControlPanel = document.getElementById('led-control-panel');
+        const userPanel = document.getElementById('user-profile-panel');
+        const workspacePanel = document.getElementById('workspace-panel');
+        const ragUploadPanel = document.getElementById('rag-upload-panel');
+        const startNexaButton = document.getElementById('start-nexa');
+        const serverConnectionStatus = document.getElementById('server-connection');
+        const ollamaStatus = document.getElementById('ollama-status');
+        const lmstudioStatus = document.getElementById('lmstudio-status');
+        const modelSelect = document.getElementById('model-select');
+        const modelList = document.getElementById('model-list');
+        const uploadButton = document.getElementById('upload-button');
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const ragUploadArea = document.getElementById('rag-upload-area');
+        const ragFileInput = document.getElementById('rag-file-input');
+        const scanModelsButton = document.getElementById('scan-models');
+        const themePreviewElements = document.querySelectorAll('.theme-preview');
+        const ledColorInput = document.getElementById('led-color');
+        const ledBrightnessInput = document.getElementById('led-brightness');
+        const ledPulseSpeedInput = document.getElementById('led-pulse-speed');
+        const ledGlowIntensityInput = document.getElementById('led-glow-intensity');
+        const ollamaUrlInput = document.getElementById('ollama-url');
+        const lmStudioUrlInput = document.getElementById('lmstudio-url');
+        const openaiKeyInput = document.getElementById('openai-key');
+        const serverConnection = document.getElementById('server-connection');
+        const ollamaStatusIndicator = document.getElementById('ollama-status');
+        const lmstudioStatusIndicator = document.getElementById('lmstudio-status');
+        const digitalRain = document.getElementById('digital-rain');
+        const customCursor = document.getElementById('custom-cursor');
+        const cursorTrail = document.getElementById('cursor-trail');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved settings
+            loadSettings();
+
+            // Create digital rain effect
+            createDigitalRain();
+
+            // Create custom cursor
+            createCustomCursor();
+
+            // Initialize UI
+            initializeUI();
+
+            // Check server connectivity
+            checkServerConnectivity();
+        });
+
+        // Load settings from localStorage
+        function loadSettings() {
+            if (localStorage.getItem('nexahubSettings')) {
+                const settings = JSON.parse(localStorage.getItem('nexahubSettings'));
+                currentTheme = settings.theme || 'neon-pink';
+                ledColor = settings.ledColor || '#00ffff';
+                ledBrightness = settings.ledBrightness || 70;
+                ledPulseSpeed = settings.ledPulseSpeed || 50;
+                ledGlowIntensity = settings.ledGlowIntensity || 80;
+                ollamaUrl = settings.ollamaUrl || 'http://localhost:11434';
+                lmStudioUrl = settings.lmStudioUrl || 'http://localhost:1234';
+                openaiKey = settings.openaiKey || '';
+                aiServer = settings.aiServer || 'ollama';
+
+                // Apply settings
+                applyTheme(currentTheme);
+                ledColorInput.value = ledColor;
+                ledBrightnessInput.value = ledBrightness;
+                ledPulseSpeedInput.value = ledPulseSpeed;
+                ledGlowIntensityInput.value = ledGlowIntensity;
+                ollamaUrlInput.value = ollamaUrl;
+                lmStudioUrlInput.value = lmStudioUrl;
+                openaiKeyInput.value = openaiKey;
+            }
+        }
+
+        // Save settings to localStorage
+        function saveSettings() {
+            const settings = {
+                theme: currentTheme,
+                ledColor: ledColor,
+                ledBrightness: ledBrightness,
+                ledPulseSpeed: ledPulseSpeed,
+                ledGlowIntensity: ledGlowIntensity,
+                ollamaUrl: ollamaUrl,
+                lmStudioUrl: lmStudioUrl,
+                openaiKey: openaiKey,
+                aiServer: aiServer
+            };
+            localStorage.setItem('nexahubSettings', JSON.stringify(settings));
+        }
+
+        // Create digital rain effect
+        function createDigitalRain() {
+            const rainContainer = digitalRain;
+            const rainDropCount = 50;
+
+            for (let i = 0; i < rainDropCount; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'rain-drop';
+                drop.style.left = Math.random() * 100 + '%';
+                drop.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                drop.style.animationDelay = Math.random() * 5 + 's';
+                rainContainer.appendChild(drop);
+            }
+        }
+
+        // Create custom cursor
+        function createCustomCursor() {
+            document.addEventListener('mousemove', function(e) {
+                // Create main cursor
+                const cursor = document.createElement('div');
+                cursor.className = 'custom-cursor';
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+                document.body.appendChild(cursor);
+
+                // Create trail elements
+                for (let i = 0; i < 3; i++) {
+                    const trail = document.createElement('div');
+                    trail.className = 'cursor-trail';
+                    trail.style.left = e.clientX + 'px';
+                    trail.style.top = e.clientY + 'px';
+                    trail.style.opacity = (1 - i * 0.3).toString();
+                    document.body.appendChild(trail);
+
+                    // Remove after animation
+                    setTimeout(() => {
+                        trail.remove();
+                    }, 300 + i * 100);
+                }
+
+                // Remove main cursor after animation
+                setTimeout(() => {
+                    cursor.remove();
+                }, 300);
+            });
+        }
+
+        // Initialize UI
+        function initializeUI() {
+            // Panel open/close functionality
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const panel = this.dataset.panel;
+                    closeAllPanels();
+
+                    if (panel === 'settings') {
+                        settingsPanel.classList.add('show');
+                    } else if (panel === 'led-control') {
+                        ledControlPanel.classList.add('show');
+                    } else if (panel === 'user-profile') {
+                        userPanel.classList.add('show');
+                    } else if (panel === 'workspace') {
+                        workspacePanel.classList.add('show');
+                    } else if (panel === 'rag-upload') {
+                        ragUploadPanel.classList.add('show');
+                    }
+                });
+            });
+
+            // Close panels
+            document.getElementById('close-settings').addEventListener('click', () => settingsPanel.classList.remove('show'));
+            document.getElementById('close-led-control').addEventListener('click', () => ledControlPanel.classList.remove('show'));
+            document.getElementById('close-user-profile').addEventListener('click', () => userPanel.classList.remove('show'));
+            document.getElementById('close-workspace').addEventListener('click', () => workspacePanel.classList.remove('show'));
+            document.getElementById('close-rag-upload').addEventListener('click', () => ragUploadPanel.classList.remove('show'));
+
+            // Theme selection
+            themePreviewElements.forEach(preview => {
+                preview.addEventListener('click', function() {
+                    themePreviewElements.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                    currentTheme = this.dataset.theme;
+                    applyTheme(currentTheme);
+                    saveSettings();
+                });
+            });
+
+            // LED control sliders
+            ledColorInput.addEventListener('input', function() {
+                ledColor = this.value;
+                applyLedEffects();
+                saveSettings();
+            });
+
+            ledBrightnessInput.addEventListener('input', function() {
+                ledBrightness = parseInt(this.value);
+                applyLedEffects();
+                saveSettings();
+            });
+
+            ledPulseSpeedInput.addEventListener('input', function() {
+                ledPulseSpeed = parseInt(this.value);
+                applyLedEffects();
+                saveSettings();
+            });
+
+            ledGlowIntensityInput.addEventListener('input', function() {
+                ledGlowIntensity = parseInt(this.value);
+                applyLedEffects();
+                saveSettings();
+            });
+
+            // Server URL inputs
+            ollamaUrlInput.addEventListener('change', function() {
+                ollamaUrl = this.value;
+                saveSettings();
+            });
+
+            lmStudioUrlInput.addEventListener('change', function() {
+                lmStudioUrl = this.value;
+                saveSettings();
+            });
+
+            openaiKeyInput.addEventListener('change', function() {
+                openaiKey = this.value;
+                saveSettings();
+            });
+
+            // Send message
+            sendButton.addEventListener('click', sendMessage);
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // Upload button
+            uploadButton.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // File input change
+            fileInput.addEventListener('change', handleFileUpload);
+
+            // Drag and drop for upload
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function() {
+                this.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            // RAG upload drag and drop
+            ragUploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            ragUploadArea.addEventListener('dragleave', function() {
+                this.classList.remove('dragover');
+            });
+
+            ragUploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                handleRagFiles(e.dataTransfer.files);
+            });
+
+            // RAG file input
+            ragFileInput.addEventListener('change', function() {
+                handleRagFiles(this.files);
+            });
+
+            // Select files button
+            document.getElementById('rag-select-files').addEventListener('click', function() {
+                ragFileInput.click();
+            });
+
+            // Scan models button
+            scanModelsButton.addEventListener('click', scanModels);
+
+            // Start Nexa button
+            startNexaButton.addEventListener('click', function() {
+                this.innerHTML = '<div class="loading-spinner"></div>';
+                checkServerConnectivity();
+                scanModels();
+            });
+
+            // Model selection
+            modelSelect.addEventListener('change', function() {
+                selectedModel = this.value;
+                saveSettings();
+            });
+
+            // Apply LED effects initially
+            applyLedEffects();
+        }
+
+        // Apply theme
+        function applyTheme(theme) {
+            const root = document.documentElement;
+
+            switch(theme) {
+                case 'neon-pink':
+                    root.style.setProperty('--neon-pink', '#ff00ff');
+                    root.style.setProperty('--neon-purple', '#9d00ff');
+                    root.style.setProperty('--neon-cyan', '#00ffff');
+                    break;
+                case 'blue-circuit':
+                    root.style.setProperty('--neon-pink', '#0080ff');
+                    root.style.setProperty('--neon-purple', '#00ffff');
+                    root.style.setProperty('--neon-cyan', '#00ffff');
+                    break;
+                case 'green-matrix':
+                    root.style.setProperty('--neon-pink', '#00ff80');
+                    root.style.setProperty('--neon-purple', '#00ff40');
+                    root.style.setProperty('--neon-cyan', '#00ff80');
+                    break;
+                case 'purple-rain':
+                    root.style.setProperty('--neon-pink', '#9d00ff');
+                    root.style.setProperty('--neon-purple', '#cc00ff');
+                    root.style.setProperty('--neon-cyan', '#9d00ff');
+                    break;
+            }
+        }
+
+        // Apply LED effects
+        function applyLedEffects() {
+            const root = document.documentElement;
+            const intensity = ledGlowIntensity / 100;
+            const brightness = ledBrightness / 100;
+
+            // Apply glow effects to chat bubbles
+            const chatBubbles = document.querySelectorAll('.chat-bubble');
+            chatBubbles.forEach(bubble => {
+                bubble.style.boxShadow = `0 0 ${15 * intensity}px ${ledColor}`;
+                bubble.style.borderColor = ledColor;
+            });
+
+            // Apply glow effects to UI elements
+            const uiElements = document.querySelectorAll('.neon-button, .sidebar-item');
+            uiElements.forEach(element => {
+                element.style.boxShadow = `0 0 ${10 * intensity}px ${ledColor}`;
+            });
+
+            // Apply to cursor
+            customCursor.style.boxShadow = `0 0 ${20 * intensity}px ${ledColor}`;
+            cursorTrail.style.boxShadow = `0 0 ${10 * intensity}px ${ledColor}`;
+        }
+
+        // Check server connectivity
+        function checkServerConnectivity() {
+            // Check Ollama
+            checkOllamaConnectivity();
+
+            // Check LM Studio
+            checkLMStudioConnectivity();
+
+            // Update status
+            updateConnectionStatus();
+        }
+
+        // Check Ollama connectivity
+        function checkOllamaConnectivity() {
+            fetch(`${ollamaUrl}/api/tags`)
+                .then(response => {
+                    if (response.ok) {
+                        ollamaConnected = true;
+                        ollamaStatusIndicator.textContent = 'Connected';
+                        ollamaStatusIndicator.className = 'text-green-400';
+                        scanModels();
+                    } else {
+                        ollamaConnected = false;
+                        ollamaStatusIndicator.textContent = 'Disconnected';
+                        ollamaStatusIndicator.className = 'text-red-400';
+                    }
+                })
+                .catch(() => {
+                    ollamaConnected = false;
+                    ollamaStatusIndicator.textContent = 'Disconnected';
+                    ollamaStatusIndicator.className = 'text-red-400';
+                });
+        }
+
+        // Check LM Studio connectivity
+        function checkLMStudioConnectivity() {
+            fetch(`${lmStudioUrl}/v1/models`)
+                .then(response => {
+                    if (response.ok) {
+                        lmStudioConnected = true;
+                        lmstudioStatusIndicator.textContent = 'Connected';
+                        lmstudioStatusIndicator.className = 'text-green-400';
+                    } else {
+                        lmStudioConnected = false;
+                        lmstudioStatusIndicator.textContent = 'Disconnected';
+                        lmstudioStatusIndicator.className = 'text-red-400';
+                    }
+                })
+                .catch(() => {
+                    lmStudioConnected = false;
+                    lmstudioStatusIndicator.textContent = 'Disconnected';
+                    lmstudioStatusIndicator.className = 'text-red-400';
+                });
+        }
+
+        // Update connection status
+        function updateConnectionStatus() {
+            if (ollamaConnected || lmStudioConnected) {
+                serverConnectionStatus.textContent = 'Connected';
+                serverConnectionStatus.className = 'connection-status connected';
+            } else {
+                serverConnectionStatus.textContent = 'Disconnected';
+                serverConnectionStatus.className = 'connection-status disconnected';
+            }
+        }
+
+        // Scan models from servers
+        function scanModels() {
+            modelList.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">Loading models...</div>';
+
+            // Scan Ollama models
+            if (ollamaConnected) {
+                fetch(`${ollamaUrl}/api/tags`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.models) {
+                            models = data.models;
+                            updateModelList();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching Ollama models:', error);
+                    });
+            }
+
+            // Scan LM Studio models
+            if (lmStudioConnected) {
+                fetch(`${lmStudioUrl}/v1/models`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.data) {
+                            data.data.forEach(model => {
+                                if (!models.find(m => m.name === model.id)) {
+                                    models.push({
+                                        name: model.id,
+                                        model: model.id
+                                    });
+                                }
+                            });
+                            updateModelList();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching LM Studio models:', error);
+                    });
+            }
+        }
+
+        // Update model list
+        function updateModelList() {
+            modelList.innerHTML = '';
+
+            if (models.length === 0) {
+                modelList.innerHTML = '<div class="text-xs text-gray-400 text-center py-4">No models found</div>';
+                return;
+            }
+
+            models.forEach(model => {
+                const modelCard = document.createElement('div');
+                modelCard.className = 'model-card';
+                modelCard.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm">${model.name}</span>
+                        <button class="text-cyan-400 hover:text-cyan-300">
+                            <i class="fas fa-plus-circle"></i>
+                        </button>
+                    </div>
+                `;
+
+                modelCard.querySelector('button').addEventListener('click', function() {
+                    selectedModel = model.name;
+                    modelSelect.value = model.name;
+                    saveSettings();
+                });
+
+                modelList.appendChild(modelCard);
+            });
+        }
+
+        // Send message
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (message) {
+                // Add user message to chat
+                const userMessage = document.createElement('div');
+                userMessage.className = 'chat-bubble self-end';
+                userMessage.innerHTML = `
+                    <div class="flex items-start gap-3 justify-end">
+                        <div>
+                            <p class="text-sm mb-1">You</p>
+                            <p class="text-xs">${message}</p>
+                        </div>
+                        <div class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-xs"></i>
+                        </div>
+                    </div>
+                `;
+                chatContainer.appendChild(userMessage);
+
+                // Clear input
+                chatInput.value = '';
+
+                // Scroll to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Add to chat history
+                chatHistory.push({
+                    role: 'user',
+                    content: message
+                });
+
+                // Save chat history
+                saveChatHistory();
+
+                // Simulate AI response
+                setTimeout(() => {
+                    const aiMessage = document.createElement('div');
+                    aiMessage.className = 'chat-bubble self-start';
+                    aiMessage.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm mb-1 hologram-text">NEXAHUB AI</p>
+                                <p class="text-xs">Processing your request... <span class="typing-indicator"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span></p>
+                            </div>
+                        </div>
+                    `;
+                    chatContainer.appendChild(aiMessage);
+
+                    // Scroll to bottom
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                    // Simulate AI response after delay
+                    setTimeout(() => {
+                        const aiResponse = document.createElement('div');
+                        aiResponse.className = 'chat-bubble self-start';
+                        aiResponse.innerHTML = `
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-robot text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm mb-1 hologram-text">NEXAHUB AI</p>
+                                    <p class="text-xs">I've analyzed your request. Based on the available models, I recommend using the following for your security protocol analysis:</p>
+                                    <p class="text-xs mt-2">1. <strong>llama2:13b</strong> - Good for general security analysis</p>
+                                    <p class="text-xs">2. <strong>mistral:7b</strong> - Excellent for technical documentation</p>
+                                    <p class="text-xs mt-2">Would you like me to proceed with this analysis?</p>
+                                </div>
+                            </div>
+                        `;
+                        chatContainer.appendChild(aiResponse);
+
+                        // Add to chat history
+                        chatHistory.push({
+                            role: 'assistant',
+                            content: aiResponse.querySelector('p').textContent
+                        });
+
+                        // Save chat history
+                        saveChatHistory();
+
+                        // Scroll to bottom
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }, 2000);
+                }, 1000);
+            }
+        }
+
+        // Handle file upload
+        function handleFileUpload(e) {
+            handleFiles(e.target.files);
+        }
+
+        // Handle files
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const uploadArea = document.getElementById('upload-area');
+                const progressBar = document.getElementById('upload-progress-bar');
+                const filesCount = document.getElementById('uploaded-files-count');
+                const uploadStatus = document.getElementById('upload-status');
+
+                let uploadedCount = 0;
+                filesCount.textContent = `${uploadedCount} / ${files.length} files uploaded`;
+                uploadStatus.classList.add('hidden');
+
+                Array.from(files).forEach((file, index) => {
+                    // Simulate upload progress
+                    setTimeout(() => {
+                        const progress = (index + 1) / files.length * 100;
+                        progressBar.style.width = `${progress}%`;
+                        uploadedCount++;
+                        filesCount.textContent = `${uploadedCount} / ${files.length} files uploaded`;
+
+                        if (uploadedCount === files.length) {
+                            uploadStatus.classList.remove('hidden');
+                        }
+                    }, 500 * (index + 1));
+                });
+            }
+        }
+
+        // Handle RAG files
+        function handleRagFiles(files) {
+            if (files.length > 0) {
+                const uploadArea = document.getElementById('rag-upload-area');
+                const progressBar = document.getElementById('rag-upload-progress-bar');
+                const filesCount = document.getElementById('rag-uploaded-files-count');
+                const uploadStatus = document.getElementById('rag-upload-status');
+
+                let uploadedCount = 0;
+                filesCount.textContent = `${uploadedCount} / ${files.length} files uploaded`;
+                uploadStatus.classList.add('hidden');
+
+                Array.from(files).forEach((file, index) => {
+                    // Simulate upload progress
+                    setTimeout(() => {
+                        const progress = (index + 1) / files.length * 100;
+                        progressBar.style.width = `${progress}%`;
+                        uploadedCount++;
+                        filesCount.textContent = `${uploadedCount} / ${files.length} files uploaded`;
+
+                        // Add to uploaded documents list
+                        const uploadedDocuments = document.getElementById('uploaded-documents');
+                        const documentItem = document.createElement('div');
+                        documentItem.className = 'flex items-center justify-between p-2 bg-black bg-opacity-50 rounded';
+                        documentItem.innerHTML = `
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-file-${getFileIcon(file.name)} text-cyan-400"></i>
+                                <div>
+                                    <p class="text-xs font-bold">${file.name}</p>
+                                    <p class="text-xs text-gray-400">${(file.size / 1024).toFixed(1)} KB</p>
+                                </div>
+                            </div>
+                            <span class="text-green-400">✅ Uploaded</span>
+                        `;
+                        uploadedDocuments.appendChild(documentItem);
+
+                        if (uploadedCount === files.length) {
+                            uploadStatus.classList.remove('hidden');
+                        }
+                    }, 500 * (index + 1));
+                });
+            }
+        }
+
+        // Get file icon based on extension
+        function getFileIcon(filename) {
+            const extension = filename.split('.').pop().toLowerCase();
+
+            switch(extension) {
+                case 'pdf': return 'pdf';
+                case 'txt': return 'alt';
+                case 'doc':
+                case 'docx': return 'word';
+                case 'csv': return 'csv';
+                default: return 'file';
+            }
+        }
+
+        // Close all panels
+        function closeAllPanels() {
+            settingsPanel.classList.remove('show');
+            ledControlPanel.classList.remove('show');
+            userPanel.classList.remove('show');
+            workspacePanel.classList.remove('show');
+            ragUploadPanel.classList.remove('show');
+        }
+
+        // Save chat history
+        function saveChatHistory() {
+            localStorage.setItem('nexahubChatHistory', JSON.stringify(chatHistory));
+        }
+
+        // Load chat history
+        function loadChatHistory() {
+            const savedHistory = localStorage.getItem('nexahubChatHistory');
+            if (savedHistory) {
+                chatHistory = JSON.parse(savedHistory);
+
+                // Render chat history
+                chatHistory.forEach(message => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = message.role === 'user' ? 'chat-bubble self-end' : 'chat-bubble self-start';
+
+                    if (message.role === 'user') {
+                        messageElement.innerHTML = `
+                            <div class="flex items-start gap-3 justify-end">
+                                <div>
+                                    <p class="text-sm mb-1">You</p>
+                                    <p class="text-xs">${message.content}</p>
+                                </div>
+                                <div class="w-8 h-8 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-xs"></i>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        messageElement.innerHTML = `
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-robot text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm mb-1 hologram-text">NEXAHUB AI</p>
+                                    <p class="text-xs">${message.content}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    chatContainer.appendChild(messageElement);
+                });
+
+                // Scroll to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+
+        // Apply theme
+        function applyTheme(theme) {
+            const root = document.documentElement;
+
+            switch(theme) {
+                case 'neon-pink':
+                    root.style.setProperty('--neon-pink', '#ff00ff');
+                    root.style.setProperty('--neon-purple', '#9d00ff');
+                    root.style.setProperty('--neon-cyan', '#00ffff');
+                    break;
+                case 'blue-circuit':
+                    root.style.setProperty('--neon-pink', '#0080ff');
+                    root.style.setProperty('--neon-purple', '#00ffff');
+                    root.style.setProperty('--neon-cyan', '#00ffff');
+                    break;
+                case 'green-matrix':
+                    root.style.setProperty('--neon-pink', '#00ff80');
+                    root.style.setProperty('--neon-purple', '#00ff40');
+                    root.style.setProperty('--neon-cyan', '#00ff80');
+                    break;
+                case 'purple-rain':
+                    root.style.setProperty('--neon-pink', '#9d00ff');
+                    root.style.setProperty('--neon-purple', '#cc00ff');
+                    root.style.setProperty('--neon-cyan', '#9d00ff');
+                    break;
+            }
+        }
+
+        // Apply LED effects
+        function applyLedEffects() {
+            const root = document.documentElement;
+            const intensity = ledGlowIntensity / 100;
+            const brightness = ledBrightness / 100;
+
+            // Apply glow effects to chat bubbles
+            const chatBubbles = document.querySelectorAll('.chat-bubble');
+            chatBubbles.forEach(bubble => {
+                bubble.style.boxShadow = `0 0 ${15 * intensity}px ${ledColor}`;
+                bubble.style.borderColor = ledColor;
+            });
+
+            // Apply glow effects to UI elements
+            const uiElements = document.querySelectorAll('.neon-button, .sidebar-item');
+            uiElements.forEach(element => {
+                element.style.boxShadow = `0 0 ${10 * intensity}px ${ledColor}`;
+            });
+
+            // Apply to cursor
+            customCursor.style.boxShadow = `0 0 ${20 * intensity}px ${ledColor}`;
+            cursorTrail.style.boxShadow = `0 0 ${10 * intensity}px ${ledColor}`;
+        }
+
+        // Custom cursor trail effect
+        document.addEventListener('mousemove', function(e) {
+            // Create main cursor
+            const cursor = document.createElement('div');
+            cursor.className = 'custom-cursor';
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            document.body.appendChild(cursor);
+
+            // Create trail elements
+            for (let i = 0; i < 3; i++) {
+                const trail = document.createElement('div');
+                trail.className = 'cursor-trail';
+                trail.style.left = e.clientX + 'px';
+                trail.style.top = e.clientY + 'px';
+                trail.style.opacity = (1 - i * 0.3).toString();
+                document.body.appendChild(trail);
+
+                // Remove after animation
+                setTimeout(() => {
+                    trail.remove();
+                }, 300 + i * 100);
+            }
+
+            // Remove main cursor after animation
+            setTimeout(() => {
+                cursor.remove();
+            }, 300);
+        });
+    </script>
+</body>
+</html>
